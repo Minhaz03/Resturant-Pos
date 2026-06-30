@@ -1,5 +1,15 @@
 @extends('layouts.app')
 @section('title','Order Details')
+@push('styles')
+<style>
+@media print {
+    #main, #sidebar, #topbar, .btn, .dropdown, .no-print { display: none !important; }
+    #printable-invoice { display: block !important; }
+    body { background: white !important; }
+}
+#printable-invoice { display: none; }
+</style>
+@endpush
 @section('content')
 <div class="d-flex align-items-center gap-3 mb-4">
     <a href="{{ route('orders.index') }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></a>
@@ -26,9 +36,7 @@
             </ul>
         </div>
         @endif
-        @if($order->invoice)
-        <a href="#" class="btn btn-outline-secondary btn-sm"><i class="bi bi-printer me-1"></i>Print</a>
-        @endif
+        <button onclick="window.print()" class="btn btn-outline-secondary btn-sm"><i class="bi bi-printer me-1"></i>Print Invoice</button>
     </div>
 </div>
 

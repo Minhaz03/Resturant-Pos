@@ -12,8 +12,9 @@ class SettingController extends Controller
     public function index()
     {
         $setting = RestaurantSetting::first();
+        $settings = $setting; // alias so view can use either name
         $businessHours = BusinessHour::orderBy('day_of_week')->get();
-        return view('settings.index', compact('setting', 'businessHours'));
+        return view('settings.index', compact('setting', 'settings', 'businessHours'));
     }
 
     public function update(Request $request)

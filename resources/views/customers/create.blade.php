@@ -9,9 +9,9 @@
     <form method="POST" action="{{ route('customers.store') }}">@csrf
         <div class="row g-3">
             <div class="col-md-6"><label class="form-label">Name <span class="text-danger">*</span></label>
-                <input type="text" name="name" class="form-control @error('name')is-invalid@enderror" value="{{ old('name') }}" required>@error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror</div>
+                <input type="text" name="name" class="form-control @error('name') is-invalid @enderror" value="{{ old('name') }}" required>@error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror</div>
             <div class="col-md-6"><label class="form-label">Phone <span class="text-danger">*</span></label>
-                <input type="text" name="phone" class="form-control @error('phone')is-invalid@enderror" value="{{ old('phone') }}" required>@error('phone')<div class="invalid-feedback">{{ $message }}</div>@enderror</div>
+                <input type="text" name="phone" class="form-control @error('phone') is-invalid @enderror" value="{{ old('phone') }}" required>@error('phone')<div class="invalid-feedback">{{ $message }}</div>@enderror</div>
             <div class="col-md-6"><label class="form-label">Email</label>
                 <input type="email" name="email" class="form-control" value="{{ old('email') }}"></div>
             <div class="col-md-6"><label class="form-label">Date of Birth</label>

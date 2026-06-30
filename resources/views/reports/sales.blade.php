@@ -3,8 +3,13 @@
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div><h4 class="fw-bold mb-1" style="color:var(--secondary)">Sales Report</h4><p class="text-muted small mb-0">Revenue and transaction analysis</p></div>
-    <div class="d-flex gap-2">
-        <a href="{{ route('reports.sales.pdf',request()->query()) }}" class="btn btn-sm btn-outline-danger"><i class="bi bi-file-pdf me-1"></i>PDF</a>
+    <div class="dropdown">
+        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown"><i class="bi bi-download me-1"></i>Export</button>
+        <ul class="dropdown-menu shadow border-0">
+            <li><a class="dropdown-item" href="{{ route('reports.sales.pdf', request()->query()) }}"><i class="bi bi-file-pdf me-2 text-danger"></i>Download PDF</a></li>
+            <li><a class="dropdown-item" href="{{ route('reports.sales.csv', request()->query()) }}"><i class="bi bi-filetype-csv me-2 text-success"></i>Download CSV</a></li>
+            <li><a class="dropdown-item" href="{{ route('reports.sales.excel', request()->query()) }}"><i class="bi bi-file-earmark-excel me-2 text-success"></i>Download Excel</a></li>
+        </ul>
     </div>
 </div>
 <div class="card mb-4"><div class="card-body">
@@ -28,18 +33,9 @@
     <div class="col-md-3"><div class="card text-center"><div class="card-body"><p class="text-muted small mb-1">Total Tax</p><h4 class="fw-bold text-warning">৳{{ number_format($summary['total_tax'] ?? 0,2) }}</h4></div></div></div>
 </div>
 
-<div class="row g-4 mb-4">
-    <div class="col-lg-8">
-        <div class="card"><div class="card-header fw-semibold">Revenue Trend</div>
-        <div class="card-body"><canvas id="salesChart" height="280"></canvas></div></div>
-    </div>
-    <div class="col-lg-4">
-        <div class="card"><div class="card-header fw-semibold">Payment Methods</div>
-        <div class="card-body"><canvas id="paymentChart" height="280"></canvas></div></div>
-    </div>
+{{-- DATA TABLE first --}}
+<div class="card mb-4"><div class="card-header fw-semibold d-flex justify-content-between align-items-center">Sales Data
 </div>
-
-<div class="card"><div class="card-header fw-semibold">Sales Data</div>
 <div class="card-body p-0"><div class="table-responsive">
     <table class="table mb-0">
         <thead><tr><th>Period</th><th>Orders</th><th>Revenue</th><th>Tax</th><th>Discount</th><th>Net</th></tr></thead>
@@ -59,6 +55,18 @@
         </tbody>
     </table>
 </div></div></div>
+
+{{-- CHARTS below the data table --}}
+<div class="row g-4 mt-2">
+    <div class="col-lg-8">
+        <div class="card"><div class="card-header fw-semibold">Revenue Trend</div>
+        <div class="card-body"><canvas id="salesChart" height="280"></canvas></div></div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card"><div class="card-header fw-semibold">Payment Methods</div>
+        <div class="card-body"><canvas id="paymentChart" height="280"></canvas></div></div>
+    </div>
+</div>
 
 @push('scripts')
 <script>

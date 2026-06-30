@@ -24,11 +24,11 @@
             <div class="col-md-6" id="maxDiscountDiv"><label class="form-label fw-semibold">Max Discount (৳)</label><input type="number" name="max_discount" class="form-control" value="{{ old('max_discount') }}" step="0.01" min="0" placeholder="Leave empty for no limit"></div>
             <div class="col-md-6"><label class="form-label fw-semibold">Usage Limit</label><input type="number" name="usage_limit" class="form-control" value="{{ old('usage_limit') }}" min="1" placeholder="Leave empty for unlimited"></div>
             <div class="col-md-6"><label class="form-label fw-semibold">Per User Limit</label><input type="number" name="per_user_limit" class="form-control" value="{{ old('per_user_limit',1) }}" min="1"></div>
-            <div class="col-md-6"><label class="form-label fw-semibold">Start Date</label><input type="date" name="starts_at" class="form-control" value="{{ old('starts_at',today()->toDateString()) }}"></div>
-            <div class="col-md-6"><label class="form-label fw-semibold">Expiry Date</label><input type="date" name="expires_at" class="form-control" value="{{ old('expires_at') }}"></div>
+            <div class="col-md-6"><label class="form-label fw-semibold">Start Date</label><input type="date" name="start_date" class="form-control" value="{{ old('start_date',today()->toDateString()) }}"></div>
+            <div class="col-md-6"><label class="form-label fw-semibold">Expiry Date</label><input type="date" name="end_date" class="form-control" value="{{ old('end_date') }}"></div>
             <div class="col-12">
                 <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" name="is_active" id="isActive" value="1" {{ old('is_active',1)?'checked':'' }}>
+                    <input class="form-check-input" type="checkbox" name="status" id="isActive" value="1" {{ old('status',1)?'checked':'' }}>
                     <label class="form-check-label" for="isActive">Active</label>
                 </div>
             </div>

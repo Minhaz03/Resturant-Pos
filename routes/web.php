@@ -99,7 +99,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/reports/sales', [ReportController::class, 'salesIndex'])->name('reports.sales');
     Route::get('/reports/sales/data', [ReportController::class, 'salesData'])->name('reports.sales.data');
     Route::get('/reports/sales/pdf', [ReportController::class, 'exportSalesPdf'])->name('reports.sales.pdf');
+    Route::get('/reports/sales/csv', [ReportController::class, 'exportSalesCsv'])->name('reports.sales.csv');
+    Route::get('/reports/sales/excel', [ReportController::class, 'exportSalesExcel'])->name('reports.sales.excel');
     Route::get('/reports/inventory', [ReportController::class, 'inventoryReport'])->name('reports.inventory');
+    Route::get('/reports/inventory/csv', [ReportController::class, 'exportInventoryCsv'])->name('reports.inventory.csv');
     Route::get('/reports/customers', [ReportController::class, 'customerReport'])->name('reports.customers');
     Route::get('/reports/tax', [ReportController::class, 'taxReport'])->name('reports.tax');
 

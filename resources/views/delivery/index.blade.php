@@ -5,10 +5,10 @@
     <div><h4 class="fw-bold mb-1" style="color:var(--secondary)">Delivery Orders</h4><p class="text-muted small mb-0">Track and manage deliveries</p></div>
 </div>
 <div class="row g-3 mb-4">
-    <div class="col-md-3"><div class="card text-center"><div class="card-body"><p class="text-muted small mb-1">Pending</p><h3 class="fw-bold text-warning">{{ $stats['pending'] ?? 0 }}</h3></div></div></div>
-    <div class="col-md-3"><div class="card text-center"><div class="card-body"><p class="text-muted small mb-1">Assigned</p><h3 class="fw-bold text-primary">{{ $stats['assigned'] ?? 0 }}</h3></div></div></div>
-    <div class="col-md-3"><div class="card text-center"><div class="card-body"><p class="text-muted small mb-1">In Transit</p><h3 class="fw-bold" style="color:var(--secondary)">{{ $stats['in_transit'] ?? 0 }}</h3></div></div></div>
-    <div class="col-md-3"><div class="card text-center"><div class="card-body"><p class="text-muted small mb-1">Delivered Today</p><h3 class="fw-bold text-success">{{ $stats['delivered_today'] ?? 0 }}</h3></div></div></div>
+    <div class="col-md-3"><div class="card text-center"><div class="card-body"><p class="text-muted small mb-1">Total</p><h3 class="fw-bold" style="color:var(--secondary)">{{ $stats['total'] ?? 0 }}</h3></div></div></div>
+    <div class="col-md-3"><div class="card text-center"><div class="card-body"><p class="text-muted small mb-1">Pending / Assigned</p><h3 class="fw-bold text-warning">{{ $stats['pending'] ?? 0 }}</h3></div></div></div>
+    <div class="col-md-3"><div class="card text-center"><div class="card-body"><p class="text-muted small mb-1">In Transit</p><h3 class="fw-bold text-primary">{{ $stats['in_transit'] ?? 0 }}</h3></div></div></div>
+    <div class="col-md-3"><div class="card text-center"><div class="card-body"><p class="text-muted small mb-1">Delivered</p><h3 class="fw-bold text-success">{{ $stats['delivered'] ?? 0 }}</h3></div></div></div>
 </div>
 <div class="card mb-3"><div class="card-body py-2">
     <form method="GET" class="d-flex gap-2 flex-wrap">

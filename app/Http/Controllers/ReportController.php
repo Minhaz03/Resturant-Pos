@@ -144,4 +144,78 @@ class ReportController extends Controller
 
         return view('reports.tax', compact('taxData', 'summary', 'from', 'to'));
     }
+
+    public function exportSalesCsv(Request $request)
+    {
+        $from = $request->from ?? now()->startOfMonth()->toDateString();
+        $to   = $request->to   ?? now()->toDateString();
+
+        $orders = Order::whereBetween(DB::raw('DATE(created_at)'), [$from, $to])
+            ->where('status', 'completed')
+            ->select(DB::raw('DATE(created_at) as date'), DB::raw('COUNT(*) as orders'), DB::raw('SUM(subtotal) as revenue'), DB::raw('SUM(tax_amount) as tax'), DB::raw('SUM(discount_amount) as discount'), DB::raw('SUM(total_amount) as total'))
+            ->groupBy(DB::raw('DATE(created_at)'))->orderBy('date')->get();
+
+        $filename = 'sales-report-' . $from . '-to-' . $to . '.csv';
+        $headers  = ['Content-Type' => 'text/csv', 'Content-Disposition' => "attachment; filename=\"$filename\""];
+
+        $callback = function () use ($orders) {
+            $fh = fopen('php://output', 'w');
+            fputcsv($fh, ['Date', 'Orders', 'Revenue', 'Tax', 'Discount', 'Net Total']);
+            foreach ($orders as $row) {
+                fputcsv($fh, [$row->date, $row->orders, number_format($row->revenue, 2), number_format($row->tax, 2), number_format($row->discount, 2), number_format($row->total, 2)]);
+            }
+            fclose($fh);
+        };
+        return response()->stream($callback, 200, $headers);
+    }
+
+    public function exportSalesExcel(Request $request)
+    {
+        $from = $request->from ?? now()->startOfMonth()->toDateString();
+        $to   = $request->to   ?? now()->toDateString();
+
+        $orders = Order::whereBetween(DB::raw('DATE(created_at)'), [$from, $to])
+            ->where('status', 'completed')
+            ->select(DB::raw('DATE(created_at) as date'), DB::raw('COUNT(*) as orders'), DB::raw('SUM(subtotal) as revenue'), DB::raw('SUM(tax_amount) as tax'), DB::raw('SUM(discount_amount) as discount'), DB::raw('SUM(total_amount) as total'))
+            ->groupBy(DB::raw('DATE(created_at)'))->orderBy('date')->get();
+
+        $filename = 'sales-report-' . $from . '-to-' . $to . '.xlsx';
+
+        // Build XML-based spreadsheet (XLSX via SpreadsheetML — no extra package needed)
+        $xml  = '<?xml version="1.0"?>' . "\n";
+        $xml .= '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">';
+        $xml .= '<Worksheet ss:Name="Sales Report"><Table>';
+        $xml .= '<Row><Cell><Data ss:Type="String">Date</Data></Cell><Cell><Data ss:Type="String">Orders</Data></Cell><Cell><Data ss:Type="String">Revenue</Data></Cell><Cell><Data ss:Type="String">Tax</Data></Cell><Cell><Data ss:Type="String">Discount</Data></Cell><Cell><Data ss:Type="String">Net Total</Data></Cell></Row>';
+        foreach ($orders as $row) {
+            $xml .= "<Row><Cell><Data ss:Type=\"String\">{$row->date}</Data></Cell><Cell><Data ss:Type=\"Number\">{$row->orders}</Data></Cell><Cell><Data ss:Type=\"Number\">{$row->revenue}</Data></Cell><Cell><Data ss:Type=\"Number\">{$row->tax}</Data></Cell><Cell><Data ss:Type=\"Number\">{$row->discount}</Data></Cell><Cell><Data ss:Type=\"Number\">{$row->total}</Data></Cell></Row>";
+        }
+        $xml .= '</Table></Worksheet></Workbook>';
+
+        return response($xml, 200, [
+            'Content-Type'        => 'application/vnd.ms-excel',
+            'Content-Disposition' => "attachment; filename=\"$filename\"",
+        ]);
+    }
+
+    public function exportInventoryCsv()
+    {
+        $items    = InventoryItem::with('supplier')->get();
+        $filename = 'inventory-report-' . now()->toDateString() . '.csv';
+        $headers  = ['Content-Type' => 'text/csv', 'Content-Disposition' => "attachment; filename=\"$filename\""];
+
+        $callback = function () use ($items) {
+            $fh = fopen('php://output', 'w');
+            fputcsv($fh, ['SKU', 'Name', 'Category', 'Supplier', 'Unit', 'Quantity', 'Min Qty', 'Unit Cost', 'Total Value', 'Status']);
+            foreach ($items as $item) {
+                fputcsv($fh, [
+                    $item->sku, $item->name, $item->category, $item->supplier?->name ?? '—',
+                    $item->unit, $item->quantity, $item->min_quantity,
+                    number_format($item->unit_cost, 2), number_format($item->total_value, 2),
+                    $item->isLowStock() ? 'Low Stock' : ($item->quantity == 0 ? 'Out of Stock' : 'OK'),
+                ]);
+            }
+            fclose($fh);
+        };
+        return response()->stream($callback, 200, $headers);
+    }
 }

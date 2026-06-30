@@ -21,11 +21,12 @@
             <div class="col-md-6" id="maxDiscountDiv"><label class="form-label fw-semibold">Max Discount (৳)</label><input type="number" name="max_discount" class="form-control" value="{{ old('max_discount',$coupon->max_discount) }}" step="0.01" min="0"></div>
             <div class="col-md-6"><label class="form-label fw-semibold">Usage Limit</label><input type="number" name="usage_limit" class="form-control" value="{{ old('usage_limit',$coupon->usage_limit) }}" min="1"></div>
             <div class="col-md-6"><label class="form-label fw-semibold">Used Count</label><input type="number" class="form-control" value="{{ $coupon->used_count ?? 0 }}" disabled></div>
-            <div class="col-md-6"><label class="form-label fw-semibold">Start Date</label><input type="date" name="starts_at" class="form-control" value="{{ old('starts_at',$coupon->starts_at?->format('Y-m-d')) }}"></div>
-            <div class="col-md-6"><label class="form-label fw-semibold">Expiry Date</label><input type="date" name="expires_at" class="form-control" value="{{ old('expires_at',$coupon->expires_at?->format('Y-m-d')) }}"></div>
+            <div class="col-md-6"><label class="form-label fw-semibold">Per User Limit <span class="text-danger">*</span></label><input type="number" name="per_user_limit" class="form-control" value="{{ old('per_user_limit',$coupon->per_user_limit ?? 1) }}" min="1" required></div>
+            <div class="col-md-6"><label class="form-label fw-semibold">Start Date</label><input type="date" name="start_date" class="form-control" value="{{ old('start_date',$coupon->start_date?->format('Y-m-d')) }}"></div>
+            <div class="col-md-6"><label class="form-label fw-semibold">Expiry Date</label><input type="date" name="end_date" class="form-control" value="{{ old('end_date',$coupon->end_date?->format('Y-m-d')) }}"></div>
             <div class="col-12">
                 <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" name="is_active" id="isActive" value="1" {{ old('is_active',$coupon->is_active)?'checked':'' }}>
+                    <input class="form-check-input" type="checkbox" name="status" id="isActive" value="1" {{ old('status', $coupon->status) ? 'checked' : '' }}>
                     <label class="form-check-label" for="isActive">Active</label>
                 </div>
             </div>

@@ -28,18 +28,19 @@ class EmployeeController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'name' => 'required|string|max:100',
-            'phone' => 'required|string',
-            'email' => 'nullable|email',
-            'address' => 'nullable|string',
-            'dob' => 'nullable|date',
-            'gender' => 'nullable|in:male,female,other',
-            'role' => 'required|string',
-            'department' => 'nullable|string',
-            'salary' => 'required|numeric|min:0',
-            'hire_date' => 'required|date',
-            'avatar' => 'nullable|image|max:2048',
-            'nid' => 'nullable|string',
+            'name'              => 'required|string|max:100',
+            'phone'             => 'required|string',
+            'email'             => 'nullable|email',
+            'address'           => 'nullable|string',
+            'dob'               => 'nullable|date',
+            'gender'            => 'nullable|in:male,female,other',
+            'role'              => 'required|string',
+            'department'        => 'nullable|string',
+            'salary'            => 'required|numeric|min:0',
+            'hire_date'         => 'required|date',
+            'avatar'            => 'nullable|image|max:2048',
+            'nid'               => 'nullable|string|max:20',
+            'nid_photo'         => 'nullable|image|max:4096',
             'emergency_contact' => 'nullable|string',
         ]);
 
@@ -48,6 +49,9 @@ class EmployeeController extends Controller
 
         if ($request->hasFile('avatar')) {
             $data['avatar'] = $request->file('avatar')->store('employees', 'public');
+        }
+        if ($request->hasFile('nid_photo')) {
+            $data['nid_photo'] = $request->file('nid_photo')->store('employees/nid', 'public');
         }
 
         Employee::create($data);
@@ -69,21 +73,27 @@ class EmployeeController extends Controller
     public function update(Request $request, Employee $employee)
     {
         $data = $request->validate([
-            'name' => 'required|string|max:100',
-            'phone' => 'required|string',
-            'email' => 'nullable|email',
-            'address' => 'nullable|string',
-            'role' => 'required|string',
-            'department' => 'nullable|string',
-            'salary' => 'required|numeric|min:0',
+            'name'      => 'required|string|max:100',
+            'phone'     => 'required|string',
+            'email'     => 'nullable|email',
+            'address'   => 'nullable|string',
+            'role'      => 'required|string',
+            'department'=> 'nullable|string',
+            'salary'    => 'required|numeric|min:0',
             'hire_date' => 'required|date',
-            'status' => 'required|in:active,inactive,terminated',
-            'avatar' => 'nullable|image|max:2048',
+            'status'    => 'required|in:active,inactive,terminated',
+            'avatar'    => 'nullable|image|max:2048',
+            'nid'       => 'nullable|string|max:20',
+            'nid_photo' => 'nullable|image|max:4096',
         ]);
 
         if ($request->hasFile('avatar')) {
             if ($employee->avatar) Storage::disk('public')->delete($employee->avatar);
             $data['avatar'] = $request->file('avatar')->store('employees', 'public');
+        }
+        if ($request->hasFile('nid_photo')) {
+            if ($employee->nid_photo) Storage::disk('public')->delete($employee->nid_photo);
+            $data['nid_photo'] = $request->file('nid_photo')->store('employees/nid', 'public');
         }
 
         $employee->update($data);
@@ -104,7 +114,7 @@ class EmployeeController extends Controller
         $employees = Employee::where('status', 'active')
             ->with(['attendances' => fn($q) => $q->whereDate('date', $date)])
             ->get();
-        return view('employees.attendance', compact('employees', 'date'));
+        return view('employees.attendance_index', compact('employees', 'date'));
     }
 
     public function markAttendance(Request $request)

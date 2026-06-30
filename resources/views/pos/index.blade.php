@@ -26,14 +26,29 @@
     .payment-modal .method-btn { border:2px solid #e2e8f0; border-radius:10px; padding:12px; cursor:pointer; text-align:center; transition:all 0.2s; }
     .payment-modal .method-btn.selected { border-color:var(--primary); background:#fef2f2; }
     .payment-modal .method-btn:hover { border-color:var(--primary); }
+
+    @media print {
+        body { background: white !important; color: black !important; padding: 0 !important; margin: 0 !important; }
+        #main, #sidebar, .modal, .modal-backdrop, .pos-layout, #pageLoader, #topbar { display: none !important; }
+        #receipt-print { display: block !important; width: 80mm; padding: 5mm; margin: 0 auto; font-family: 'Courier New', Courier, monospace; font-size: 12px; line-height: 1.4; color: #000; }
+        #receipt-print th, #receipt-print td { font-size: 11px; }
+    }
+    #receipt-print { display: none; }
 </style>
 @endpush
 @section('content')
 <div class="pos-layout">
     <!-- Menu Side -->
     <div class="pos-menu">
-        <div class="mb-2 d-flex gap-2">
+        <div class="mb-2 d-flex gap-2 align-items-center">
             <input type="text" id="posSearch" class="form-control form-control-sm" placeholder="Search or scan barcode...">
+            <select id="posSort" class="form-select form-select-sm" style="max-width:160px" onchange="sortItems()">
+                <option value="default">Sort: Default</option>
+                <option value="name_asc">Name A→Z</option>
+                <option value="name_desc">Name Z→A</option>
+                <option value="price_asc">Price Low→High</option>
+                <option value="price_desc">Price High→Low</option>
+            </select>
         </div>
         <div class="menu-cat-tab mb-3">
             <button class="cat-tab active" data-cat="all">All</button>
@@ -46,7 +61,7 @@
         <div class="row g-2" id="posMenuGrid">
             @foreach($categories as $cat)
             @foreach($cat->activeMenuItems as $item)
-            <div class="col-xl-2 col-lg-3 col-md-4 col-6 pos-item-wrap" data-cat="{{ $cat->id }}" data-name="{{ strtolower($item->name) }}" data-sku="{{ $item->sku }}" data-barcode="{{ $item->barcode }}">
+            <div class="col-xl-2 col-lg-3 col-md-4 col-6 pos-item-wrap" data-cat="{{ $cat->id }}" data-name="{{ strtolower($item->name) }}" data-sku="{{ $item->sku }}" data-barcode="{{ $item->barcode }}" data-price="{{ $item->effective_price }}">
                 <div class="pos-item" onclick="addToCart({{ $item->id }},'{{ addslashes($item->name) }}',{{ $item->effective_price }})">
                     @if($item->image)
                     <img src="{{ asset('storage/'.$item->image) }}" alt="{{ $item->name }}">
@@ -188,6 +203,46 @@
 </div>
 @endsection
 
+{{-- Hidden Thermal Receipt Block --}}
+<div id="receipt-print">
+    <div style="text-align:center;margin-bottom:8px">
+        <strong style="font-size:14px" id="rp-name">{{ $setting->name ?? config('app.name') }}</strong><br>
+        <small id="rp-address">{{ $setting->address ?? '' }}</small><br>
+        <small id="rp-phone">{{ $setting->phone ?? '' }}</small>
+    </div>
+    <hr style="border-top:1px dashed #000;margin:6px 0">
+    <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <small>Order:</small><small id="rp-order-no">—</small>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <small>Date:</small><small id="rp-date">—</small>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <small>Cashier:</small><small>{{ auth()->user()->name }}</small>
+    </div>
+    <hr style="border-top:1px dashed #000;margin:6px 0">
+    <table style="width:100%;border-collapse:collapse">
+        <thead>
+            <tr>
+                <th style="text-align:left">Item</th>
+                <th style="text-align:center">Qty</th>
+                <th style="text-align:right">Amt</th>
+            </tr>
+        </thead>
+        <tbody id="rp-items"></tbody>
+    </table>
+    <hr style="border-top:1px dashed #000;margin:6px 0">
+    <div style="display:flex;justify-content:space-between"><span>Subtotal:</span><span id="rp-subtotal">৳0.00</span></div>
+    <div style="display:flex;justify-content:space-between"><span>Tax (5%):</span><span id="rp-tax">৳0.00</span></div>
+    <div id="rp-disc-row" style="display:flex;justify-content:space-between;display:none"><span>Discount:</span><span id="rp-disc">-৳0.00</span></div>
+    <div style="display:flex;justify-content:space-between;font-weight:bold;border-top:1px dashed #000;margin-top:6px;padding-top:4px"><span>TOTAL:</span><span id="rp-total">৳0.00</span></div>
+    <div style="display:flex;justify-content:space-between"><span>Change:</span><span id="rp-change">৳0.00</span></div>
+    <hr style="border-top:1px dashed #000;margin:6px 0">
+    <div style="text-align:center;margin-top:8px">
+        <small id="rp-footer">{{ $setting->receipt_footer ?? 'Thank you for your visit!' }}</small>
+    </div>
+</div>
+
 @push('scripts')
 <script>
 let cart = {};
@@ -297,8 +352,46 @@ function confirmPayment() {
         }).catch(e => alert('Error processing payment'));
 }
 
-function printReceipt() { window.print(); }
-function newOrder() { clearCart(); bootstrap.Modal.getInstance(document.getElementById('receiptModal')).hide(); }
+function printReceipt() {
+    if (!lastOrderData) return;
+    const items = Object.values(cart);
+    const sub = getSubtotal();
+    const tax = sub * 0.05;
+    let disc = 0;
+    if (couponData) { disc = couponData.type === 'percentage' ? Math.min(sub * couponData.value / 100, couponData.max_discount || 9999) : couponData.value; }
+    const total = Math.max(0, sub + tax - disc);
+    const change = lastOrderData.change ?? 0;
+    // Populate receipt
+    document.getElementById('rp-order-no').textContent = lastOrderData.order_number;
+    document.getElementById('rp-date').textContent = new Date().toLocaleString();
+    document.getElementById('rp-subtotal').textContent = '৳' + sub.toFixed(2);
+    document.getElementById('rp-tax').textContent = '৳' + tax.toFixed(2);
+    document.getElementById('rp-total').textContent = '৳' + total.toFixed(2);
+    document.getElementById('rp-change').textContent = '৳' + change.toFixed(2);
+    if (disc > 0) {
+        document.getElementById('rp-disc').textContent = '-৳' + disc.toFixed(2);
+        document.getElementById('rp-disc-row').style.display = 'flex';
+    }
+    const tbody = document.getElementById('rp-items');
+    tbody.innerHTML = items.map(i => `<tr><td>${i.name}</td><td style="text-align:center">${i.qty}</td><td style="text-align:right">৳${(i.price*i.qty).toFixed(2)}</td></tr>`).join('');
+    window.print();
+}
+function newOrder() { clearCart(); couponData = null; lastOrderData = null; bootstrap.Modal.getInstance(document.getElementById('receiptModal')).hide(); }
+
+// Sort
+function sortItems() {
+    const val = document.getElementById('posSort').value;
+    const grid = document.getElementById('posMenuGrid');
+    const items = Array.from(grid.querySelectorAll('.pos-item-wrap'));
+    items.sort((a, b) => {
+        if (val === 'name_asc') return a.dataset.name.localeCompare(b.dataset.name);
+        if (val === 'name_desc') return b.dataset.name.localeCompare(a.dataset.name);
+        if (val === 'price_asc') return parseFloat(a.dataset.price||0) - parseFloat(b.dataset.price||0);
+        if (val === 'price_desc') return parseFloat(b.dataset.price||0) - parseFloat(a.dataset.price||0);
+        return 0;
+    });
+    items.forEach(el => grid.appendChild(el));
+}
 
 // Category filter
 document.querySelectorAll('.cat-tab').forEach(btn => {

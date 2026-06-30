@@ -52,14 +52,16 @@ class InventoryController extends Controller
         return redirect()->route('inventory.index')->with('success', 'Inventory item created.');
     }
 
-    public function edit(InventoryItem $inventoryItem)
+    public function edit(InventoryItem $inventory)
     {
+        $inventoryItem = $inventory;
         $suppliers = Supplier::where('status', 'active')->get();
         return view('inventory.edit', compact('inventoryItem', 'suppliers'));
     }
 
-    public function update(Request $request, InventoryItem $inventoryItem)
+    public function update(Request $request, InventoryItem $inventory)
     {
+        $inventoryItem = $inventory;
         $data = $request->validate([
             'name' => 'required|string|max:150',
             'sku' => 'required|string|unique:inventory_items,sku,' . $inventoryItem->id,
@@ -92,14 +94,16 @@ class InventoryController extends Controller
         return back()->with('success', 'Stock adjusted successfully.');
     }
 
-    public function show(InventoryItem $inventoryItem)
+    public function show(InventoryItem $inventory)
     {
+        $inventoryItem = $inventory;
         $transactions = $inventoryItem->transactions()->with('createdBy')->latest()->paginate(20);
         return view('inventory.show', compact('inventoryItem', 'transactions'));
     }
 
-    public function destroy(InventoryItem $inventoryItem)
+    public function destroy(InventoryItem $inventory)
     {
+        $inventoryItem = $inventory;
         $inventoryItem->delete();
         return redirect()->route('inventory.index')->with('success', 'Item deleted.');
     }

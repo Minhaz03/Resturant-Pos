@@ -10,7 +10,7 @@
         <thead><tr><th>Code</th><th>Name</th><th>Type</th><th>Value</th><th>Min Order</th><th>Usage</th><th>Validity</th><th>Status</th><th>Actions</th></tr></thead>
         <tbody>
             @forelse($coupons as $c)
-            @php $expired = $c->expires_at && $c->expires_at->isPast(); $limitReached = $c->usage_limit && $c->used_count >= $c->usage_limit; @endphp
+            @php $expired = $c->end_date && \Carbon\Carbon::parse($c->end_date)->isPast(); $limitReached = $c->usage_limit && $c->used_count >= $c->usage_limit; @endphp
             <tr>
                 <td><code class="fw-bold" style="color:var(--primary)">{{ $c->code }}</code></td>
                 <td>{{ $c->name }}</td>
@@ -19,13 +19,13 @@
                 <td>{{ $c->min_order_amount?'৳'.number_format($c->min_order_amount,0):'—' }}</td>
                 <td>{{ $c->used_count ?? 0 }}{{ $c->usage_limit?'/'.($c->usage_limit):'/ ∞' }}</td>
                 <td class="text-muted small">
-                    @if($c->starts_at && $c->expires_at) {{ $c->starts_at->format('d M y') }} – {{ $c->expires_at->format('d M y') }}
-                    @elseif($c->expires_at) Expires {{ $c->expires_at->format('d M Y') }}
+                    @if($c->start_date && $c->end_date) {{ \Carbon\Carbon::parse($c->start_date)->format('d M y') }} – {{ \Carbon\Carbon::parse($c->end_date)->format('d M y') }}
+                    @elseif($c->end_date) Expires {{ \Carbon\Carbon::parse($c->end_date)->format('d M Y') }}
                     @else <span class="text-success">No Expiry</span>
                     @endif
                 </td>
                 <td>
-                    @if(!$c->is_active) <span class="badge bg-secondary">Inactive</span>
+                    @if(!$c->status) <span class="badge bg-secondary">Inactive</span>
                     @elseif($expired) <span class="badge bg-danger">Expired</span>
                     @elseif($limitReached) <span class="badge bg-warning text-dark">Limit Reached</span>
                     @else <span class="badge bg-success">Active</span>

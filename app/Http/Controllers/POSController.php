@@ -12,6 +12,7 @@ use App\Models\Payment;
 use App\Models\Coupon;
 use App\Models\KitchenOrder;
 use App\Models\Invoice;
+use App\Models\DeliveryOrder;
 use App\Models\RestaurantSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -119,6 +120,16 @@ class POSController extends Controller
             Invoice::create(['order_id' => $order->id, 'invoice_number' => $invoiceNumber, 'subtotal' => $subtotal, 'tax_amount' => $taxAmount, 'discount_amount' => $couponDiscount, 'total_amount' => $total, 'status' => 'paid', 'issued_at' => now(), 'paid_at' => now(), 'created_by' => auth()->id()]);
 
             if ($request->table_id) Table::find($request->table_id)?->update(['status' => 'available']);
+
+            // Auto-create DeliveryOrder if order type is delivery
+            if (($request->order_type ?? 'dine_in') === 'delivery') {
+                DeliveryOrder::create([
+                    'order_id'         => $order->id,
+                    'status'           => 'pending',
+                    'delivery_address' => $request->delivery_address,
+                    'delivery_notes'   => $request->delivery_notes,
+                ]);
+            }
 
             if ($request->customer_id) {
                 $customer = Customer::find($request->customer_id);

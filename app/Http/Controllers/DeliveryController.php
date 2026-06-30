@@ -15,7 +15,16 @@ class DeliveryController extends Controller
         if ($request->status) $query->where('status', $request->status);
         $deliveries = $query->latest()->paginate(15);
         $riders = User::role('delivery_staff')->where('status', 'active')->get();
-        return view('delivery.index', compact('deliveries', 'riders'));
+
+        $stats = [
+            'total'      => DeliveryOrder::count(),
+            'pending'    => DeliveryOrder::whereIn('status', ['pending', 'assigned'])->count(),
+            'in_transit' => DeliveryOrder::whereIn('status', ['picked_up', 'on_way'])->count(),
+            'delivered'  => DeliveryOrder::where('status', 'delivered')->count(),
+            'failed'     => DeliveryOrder::whereIn('status', ['failed', 'cancelled'])->count(),
+        ];
+
+        return view('delivery.index', compact('deliveries', 'riders', 'stats'));
     }
 
     public function assign(Request $request, DeliveryOrder $delivery)

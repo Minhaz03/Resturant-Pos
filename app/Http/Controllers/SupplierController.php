@@ -23,14 +23,16 @@ class SupplierController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'name' => 'required|string|max:100',
-            'company' => 'nullable|string',
-            'phone' => 'required|string|unique:suppliers',
-            'email' => 'nullable|email',
-            'address' => 'nullable|string',
+            'name'           => 'required|string|max:100',
+            'company'        => 'nullable|string',
+            'phone'          => 'required|string|unique:suppliers',
+            'email'          => 'nullable|email',
+            'address'        => 'nullable|string',
+            'city'           => 'nullable|string',
             'contact_person' => 'nullable|string',
-            'tax_number' => 'nullable|string',
-            'notes' => 'nullable|string',
+            'tax_number'     => 'nullable|string',
+            'payment_terms'  => 'nullable|string|max:100',
+            'notes'          => 'nullable|string',
         ]);
         $data['status'] = 'active';
         Supplier::create($data);
@@ -45,14 +47,16 @@ class SupplierController extends Controller
     public function update(Request $request, Supplier $supplier)
     {
         $data = $request->validate([
-            'name' => 'required|string|max:100',
-            'company' => 'nullable|string',
-            'phone' => 'required|string|unique:suppliers,phone,' . $supplier->id,
-            'email' => 'nullable|email',
-            'address' => 'nullable|string',
+            'name'           => 'required|string|max:100',
+            'company'        => 'nullable|string',
+            'phone'          => 'required|string|unique:suppliers,phone,' . $supplier->id,
+            'email'          => 'nullable|email',
+            'address'        => 'nullable|string',
+            'city'           => 'nullable|string',
             'contact_person' => 'nullable|string',
-            'status' => 'required|in:active,inactive',
-            'notes' => 'nullable|string',
+            'status'         => 'required|in:active,inactive',
+            'payment_terms'  => 'nullable|string|max:100',
+            'notes'          => 'nullable|string',
         ]);
         $supplier->update($data);
         return redirect()->route('suppliers.index')->with('success', 'Supplier updated.');

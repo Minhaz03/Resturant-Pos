@@ -69,7 +69,7 @@
                                     onchange="toggleAvailability({{ $item->id }}, this)">
                             </div>
                         </td>
-                        <td><span class="badge {{ $item->status ? 'bg-success' : 'bg-secondary' }}">{{ $item->status ? 'Active' : 'Off' }}</span></td>
+                        <td><span class="badge {{ $item->is_available ? 'bg-success' : 'bg-secondary' }}" id="status-badge-{{ $item->id }}">{{ $item->is_available ? 'Active' : 'InActive' }}</span></td>
                         <td>
                             <div class="d-flex gap-1">
                                 @can('edit menu')
@@ -100,7 +100,19 @@ function toggleAvailability(id, el) {
     fetch(`/menu/${id}/availability`, {
         method: 'PATCH',
         headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content, 'Content-Type': 'application/json' }
-    }).then(r=>r.json()).then(d=>{ el.checked = d.is_available; }).catch(()=>{ el.checked = !el.checked; });
+    }).then(r=>r.json()).then(d=>{ 
+        el.checked = d.is_available; 
+        const badge = document.getElementById('status-badge-' + id);
+        if (badge) {
+            if (d.is_available) {
+                badge.textContent = 'Active';
+                badge.className = 'badge bg-success';
+            } else {
+                badge.textContent = 'InActive';
+                badge.className = 'badge bg-secondary';
+            }
+        }
+    }).catch(()=>{ el.checked = !el.checked; });
 }
 </script>
 @endpush

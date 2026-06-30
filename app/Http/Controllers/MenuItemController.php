@@ -15,7 +15,7 @@ class MenuItemController extends Controller
         $query = MenuItem::with('category');
         if ($request->category_id) $query->where('category_id', $request->category_id);
         if ($request->search) $query->where('name', 'like', '%' . $request->search . '%');
-        if ($request->status !== null) $query->where('status', $request->status);
+        if ($request->status !== null) $query->where('is_available', $request->status);
         $menuItems = $query->latest()->paginate(15);
         $categories = Category::where('status', true)->get();
         return view('menu.index', compact('menuItems', 'categories'));
@@ -58,19 +58,22 @@ class MenuItemController extends Controller
         return redirect()->route('menu.index')->with('success', 'Menu item created successfully.');
     }
 
-    public function show(MenuItem $menuItem)
+    public function show(MenuItem $menu)
     {
+        $menuItem = $menu;
         return view('menu.show', compact('menuItem'));
     }
 
-    public function edit(MenuItem $menuItem)
+    public function edit(MenuItem $menu)
     {
+        $menuItem = $menu;
         $categories = Category::where('status', true)->orderBy('sort_order')->get();
         return view('menu.edit', compact('menuItem', 'categories'));
     }
 
-    public function update(Request $request, MenuItem $menuItem)
+    public function update(Request $request, MenuItem $menu)
     {
+        $menuItem = $menu;
         $data = $request->validate([
             'category_id' => 'required|exists:categories,id',
             'name' => 'required|string|max:150',
@@ -100,8 +103,9 @@ class MenuItemController extends Controller
         return redirect()->route('menu.index')->with('success', 'Menu item updated successfully.');
     }
 
-    public function destroy(MenuItem $menuItem)
+    public function destroy(MenuItem $menu)
     {
+        $menuItem = $menu;
         if ($menuItem->image) Storage::disk('public')->delete($menuItem->image);
         $menuItem->delete();
         return redirect()->route('menu.index')->with('success', 'Menu item deleted successfully.');
