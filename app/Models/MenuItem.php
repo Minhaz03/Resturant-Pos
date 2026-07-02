@@ -60,6 +60,11 @@ class MenuItem extends Model implements HasMedia
         return $this->hasMany(OrderItem::class);
     }
 
+    public function ingredients()
+    {
+        return $this->hasMany(MenuItemIngredient::class);
+    }
+
     public function getImageUrlAttribute(): string
     {
         // First check Spatie Media Library

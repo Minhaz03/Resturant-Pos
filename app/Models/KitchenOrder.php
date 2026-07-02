@@ -29,7 +29,7 @@ class KitchenOrder extends Model
     public function getElapsedTimeAttribute()
     {
         if (!$this->started_at) return 0;
-        return now()->diffInMinutes($this->started_at);
+        return (int) abs(now()->diffInMinutes($this->started_at));
     }
 
     public function scopePending($query)

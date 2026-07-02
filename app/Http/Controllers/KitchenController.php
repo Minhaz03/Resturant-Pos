@@ -11,14 +11,20 @@ class KitchenController extends Controller
 {
     public function index()
     {
-        $kitchenOrders = KitchenOrder::with(['order.table', 'orderItem.menuItem'])
+        $kitchenOrders = KitchenOrder::with([
+                'order.table',
+                'orderItem.menuItem.ingredients.inventoryItem',
+            ])
             ->whereIn('status', ['pending', 'preparing'])
             ->orderBy('priority', 'desc')
             ->orderBy('created_at')
             ->get()
             ->groupBy('order_id');
 
-        $readyOrders = KitchenOrder::with(['order.table', 'orderItem.menuItem'])
+        $readyOrders = KitchenOrder::with([
+                'order.table',
+                'orderItem.menuItem.ingredients.inventoryItem',
+            ])
             ->where('status', 'ready')
             ->whereDate('created_at', today())
             ->latest('completed_at')

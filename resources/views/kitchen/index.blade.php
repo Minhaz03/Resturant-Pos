@@ -7,8 +7,9 @@
     .kds-card.pending .kds-header { background:var(--primary); color:#fff; }
     .kds-card.preparing .kds-header { background:#0A2647; color:#fff; }
     .kds-card.ready .kds-header { background:#166534; color:#fff; }
-    .kds-item { padding:8px 14px; border-bottom:1px solid #f1f5f9; display:flex; justify-content:space-between; align-items:center; }
+    .kds-item { padding:8px 14px; border-bottom:1px solid #f1f5f9; }
     .kds-item:last-child { border-bottom:none; }
+    .kds-item-row { display:flex; justify-content:space-between; align-items:center; }
     .elapsed { font-size:0.75rem; padding:3px 8px; border-radius:10px; font-weight:600; }
     .elapsed.ok { background:#d1fae5; color:#065f46; }
     .elapsed.warn { background:#fef3c7; color:#92400e; }
@@ -16,14 +17,23 @@
     .kds-timer { font-size:0.85rem; font-weight:600; }
     body { background:#1a1a2e; }
     .page-content { background:#1a1a2e; }
-    .kds-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:16px; }
+    .kds-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:16px; }
+
+    /* Grocery / ingredient list inside each kitchen card item */
+    .kds-ingredients { margin-top:5px; padding:6px 10px; background:#f8fafc; border-radius:7px; }
+    .kds-ingredients .ing-title { font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:#64748b; margin-bottom:3px; display:flex; align-items:center; gap:4px; }
+    .kds-ingredient-row { display:flex; justify-content:space-between; align-items:center; font-size:0.76rem; color:#374151; padding:1px 0; }
+    .kds-ingredient-row .ing-name { font-weight:500; }
+    .kds-ingredient-row .ing-qty { color:#0A2647; font-weight:700; white-space:nowrap; margin-left:8px; }
+    .kds-ingredient-row .ing-qty.low-stock { color:#dc2626; }
+    .no-ingredients { font-size:0.72rem; color:#94a3b8; font-style:italic; }
 </style>
 @endpush
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <h4 class="fw-bold mb-1 text-white">Kitchen Display System</h4>
-        <p class="text-white-50 small mb-0">Real-time order tracking</p>
+        <p class="text-white-50 small mb-0">Real-time order tracking · Grocery requirements per dish</p>
     </div>
     <div class="d-flex gap-2">
         <span class="badge bg-danger px-3 py-2" id="pendingCount">{{ $kitchenOrders->count() }} Pending</span>
@@ -53,22 +63,57 @@
                 <div class="p-2 bg-white">
                     <div class="text-muted small mb-2 px-1">{{ $order->created_at->format('H:i') }} · {{ $order->created_at->diffForHumans() }}</div>
                     @foreach($items as $ki)
+                    @php
+                        $menuItem = $ki->orderItem?->menuItem;
+                        $qty      = $ki->orderItem?->quantity ?? 1;
+                        $elapsed  = (int) abs($ki->started_at ? now()->diffInMinutes($ki->started_at) : now()->diffInMinutes($ki->created_at));
+                    @endphp
                     <div class="kds-item">
-                        <div>
-                            <div class="fw-semibold" style="font-size:0.88rem">{{ $ki->orderItem?->menuItem?->name }}</div>
-                            <div class="text-muted small">x{{ $ki->orderItem?->quantity }}
-                                @if($ki->orderItem?->notes)<span class="text-warning"> · {{ $ki->orderItem->notes }}</span>@endif
+                        <div class="kds-item-row">
+                            <div>
+                                <div class="fw-semibold" style="font-size:0.88rem">{{ $menuItem?->name }}</div>
+                                <div class="text-muted small">x{{ $qty }}
+                                    @if($ki->orderItem?->notes)<span class="text-warning"> · {{ $ki->orderItem->notes }}</span>@endif
+                                </div>
+                            </div>
+                            <div class="d-flex flex-column align-items-end gap-1">
+                                <span class="elapsed {{ $elapsed < 10 ? 'ok' : ($elapsed < 20 ? 'warn' : 'late') }}">{{ $elapsed }}min</span>
+                                @if($ki->status === 'pending')
+                                <button onclick="updateKitchenStatus({{ $ki->id }},'preparing')" class="btn btn-sm btn-warning py-0 px-2" style="font-size:0.75rem">Start</button>
+                                @elseif($ki->status === 'preparing')
+                                <button onclick="updateKitchenStatus({{ $ki->id }},'ready')" class="btn btn-sm btn-success py-0 px-2" style="font-size:0.75rem">Ready</button>
+                                @endif
                             </div>
                         </div>
-                        <div class="d-flex flex-column align-items-end gap-1">
-                            @php $elapsed = $ki->started_at ? now()->diffInMinutes($ki->started_at) : now()->diffInMinutes($ki->created_at); @endphp
-                            <span class="elapsed {{ $elapsed < 10 ? 'ok' : ($elapsed < 20 ? 'warn' : 'late') }}">{{ $elapsed }}min</span>
-                            @if($ki->status === 'pending')
-                            <button onclick="updateKitchenStatus({{ $ki->id }},'preparing')" class="btn btn-sm btn-warning py-0 px-2" style="font-size:0.75rem">Start</button>
-                            @elseif($ki->status === 'preparing')
-                            <button onclick="updateKitchenStatus({{ $ki->id }},'ready')" class="btn btn-sm btn-success py-0 px-2" style="font-size:0.75rem">Ready</button>
-                            @endif
+
+                        {{-- Grocery / Ingredient Requirements --}}
+                        @if($menuItem && $menuItem->ingredients->isNotEmpty())
+                        <div class="kds-ingredients mt-2">
+                            <div class="ing-title">
+                                <i class="bi bi-basket2-fill"></i> Grocery Needed (×{{ $qty }})
+                            </div>
+                            @foreach($menuItem->ingredients as $ing)
+                            @php
+                                $needed       = round($ing->quantity * $qty, 3);
+                                $inStock      = $ing->inventoryItem?->quantity ?? 0;
+                                $isLow        = $inStock < $needed;
+                                $unit         = $ing->inventoryItem?->unit ?? '';
+                            @endphp
+                            <div class="kds-ingredient-row">
+                                <span class="ing-name">{{ $ing->inventoryItem?->name ?? '—' }}</span>
+                                <span class="ing-qty {{ $isLow ? 'low-stock' : '' }}" title="{{ $isLow ? 'Low stock! Only '.$inStock.' '.$unit.' available' : 'In stock' }}">
+                                    {{ $needed }} {{ $unit }}
+                                    @if($isLow)<i class="bi bi-exclamation-triangle-fill ms-1" style="font-size:0.7rem"></i>@endif
+                                </span>
+                            </div>
+                            @endforeach
                         </div>
+                        @else
+                        <div class="kds-ingredients mt-2">
+                            <span class="no-ingredients"><i class="bi bi-info-circle me-1"></i>No recipe/ingredients recorded for this item.</span>
+                        </div>
+                        @endif
+
                     </div>
                     @endforeach
                 </div>
@@ -90,9 +135,23 @@
             </div>
             <div class="bg-white p-2">
                 @foreach($items as $ki)
-                <div class="kds-item">
-                    <span style="font-size:0.85rem">{{ $ki->orderItem?->menuItem?->name }}</span>
-                    <span class="badge bg-success" style="font-size:0.7rem">Ready</span>
+                <div class="kds-item" style="padding:6px 10px;">
+                    <div class="kds-item-row">
+                        <span style="font-size:0.85rem">{{ $ki->orderItem?->menuItem?->name }}</span>
+                        <span class="badge bg-success" style="font-size:0.7rem">Ready</span>
+                    </div>
+                    @php $menuItem = $ki->orderItem?->menuItem; $qty = $ki->orderItem?->quantity ?? 1; @endphp
+                    @if($menuItem && $menuItem->ingredients->isNotEmpty())
+                    <div class="kds-ingredients mt-1">
+                        <div class="ing-title"><i class="bi bi-basket2-fill"></i> Grocery Used (×{{ $qty }})</div>
+                        @foreach($menuItem->ingredients as $ing)
+                        <div class="kds-ingredient-row">
+                            <span class="ing-name">{{ $ing->inventoryItem?->name ?? '—' }}</span>
+                            <span class="ing-qty">{{ round($ing->quantity * $qty, 3) }} {{ $ing->inventoryItem?->unit ?? '' }}</span>
+                        </div>
+                        @endforeach
+                    </div>
+                    @endif
                 </div>
                 @endforeach
             </div>

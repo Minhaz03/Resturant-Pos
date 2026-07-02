@@ -376,7 +376,16 @@ function printReceipt() {
     tbody.innerHTML = items.map(i => `<tr><td>${i.name}</td><td style="text-align:center">${i.qty}</td><td style="text-align:right">৳${(i.price*i.qty).toFixed(2)}</td></tr>`).join('');
     window.print();
 }
-function newOrder() { clearCart(); couponData = null; lastOrderData = null; bootstrap.Modal.getInstance(document.getElementById('receiptModal')).hide(); }
+function newOrder() {
+    const receiptEl = document.getElementById('receiptModal');
+    const modal = bootstrap.Modal.getInstance(receiptEl) || new bootstrap.Modal(receiptEl);
+    modal.hide();
+    clearCart();
+    couponData = null;
+    lastOrderData = null;
+    document.getElementById('couponCode').value = '';
+    document.getElementById('couponInfo').classList.add('d-none');
+}
 
 // Sort
 function sortItems() {
