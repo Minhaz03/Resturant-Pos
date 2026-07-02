@@ -34,7 +34,7 @@
                 <td>
                     <div class="d-flex gap-1">
                         @can('edit coupons')<a href="{{ route('coupons.edit',$c) }}" class="btn btn-sm btn-outline-primary py-0 px-2"><i class="bi bi-pencil"></i></a>@endcan
-                        @can('delete coupons')<form method="POST" action="{{ route('coupons.destroy',$c) }}" onsubmit="return confirm('Delete coupon?')">@csrf @method('DELETE')<button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2"><i class="bi bi-trash"></i></button></form>@endcan
+                        @can('delete coupons')<form method="POST" action="{{ route('coupons.destroy',$c) }}" data-confirm="Delete coupon?" data-confirm-button="Yes, delete!">@csrf @method('DELETE')<button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2"><i class="bi bi-trash"></i></button></form>@endcan
                     </div>
                 </td>
             </tr>

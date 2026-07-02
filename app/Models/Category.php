@@ -6,14 +6,32 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
-class Category extends Model
+class Category extends Model implements HasMedia
 {
-    use SoftDeletes, LogsActivity;
+    use SoftDeletes, LogsActivity, InteractsWithMedia;
 
     protected $fillable = ['name', 'slug', 'description', 'image', 'sort_order', 'status'];
 
     protected $casts = ['status' => 'boolean'];
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('image')
+             ->singleFile()
+             ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml']);
+    }
+
+    public function registerMediaConversions(?Media $media = null): void
+    {
+        $this->addMediaConversion('thumb')
+             ->width(200)
+             ->height(200)
+             ->nonQueued();
+    }
 
     public function getActivitylogOptions(): LogOptions
     {
@@ -30,8 +48,16 @@ class Category extends Model
         return $this->hasMany(MenuItem::class)->where('status', true)->where('is_available', true);
     }
 
-    public function getImageUrlAttribute()
+    public function getImageUrlAttribute(): string
     {
-        return $this->image ? asset('storage/' . $this->image) : asset('images/default-category.png');
+        // First check Spatie Media Library
+        if ($this->hasMedia('image')) {
+            return $this->getFirstMediaUrl('image');
+        }
+        // Fallback to legacy image column
+        if ($this->image) {
+            return asset('storage/' . $this->image);
+        }
+        return asset('images/default-category.png');
     }
 }

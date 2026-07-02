@@ -30,7 +30,7 @@
                     <div class="d-flex gap-1">
                         <a href="{{ route('customers.show',$c) }}" class="btn btn-sm btn-outline-info py-0 px-2"><i class="bi bi-eye"></i></a>
                         @can('edit customers')<a href="{{ route('customers.edit',$c) }}" class="btn btn-sm btn-outline-primary py-0 px-2"><i class="bi bi-pencil"></i></a>@endcan
-                        @can('delete customers')<form method="POST" action="{{ route('customers.destroy',$c) }}" onsubmit="return confirm('Delete?')">@csrf @method('DELETE')<button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2"><i class="bi bi-trash"></i></button></form>@endcan
+                        @can('delete customers')<form method="POST" action="{{ route('customers.destroy',$c) }}" data-confirm="Delete customer?" data-confirm-button="Yes, delete!">@csrf @method('DELETE')<button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2"><i class="bi bi-trash"></i></button></form>@endcan
                     </div>
                 </td>
             </tr>

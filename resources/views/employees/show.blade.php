@@ -14,7 +14,11 @@
     <div class="col-lg-4">
         <div class="card mb-3">
             <div class="card-body text-center">
-                <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width:80px;height:80px;background:var(--secondary);color:#fff;font-size:2rem;font-weight:700">{{ strtoupper(substr($employee->name,0,1)) }}</div>
+                @if($employee->avatar)
+                    <img src="{{ asset('storage/' . $employee->avatar) }}" alt="Avatar" class="rounded-circle mb-3 object-fit-cover mx-auto" style="width:80px;height:80px;border: 3px solid var(--secondary)">
+                @else
+                    <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width:80px;height:80px;background:var(--secondary);color:#fff;font-size:2rem;font-weight:700">{{ strtoupper(substr($employee->name,0,1)) }}</div>
+                @endif
                 <h5 class="fw-bold mb-1">{{ $employee->name }}</h5>
                 <span class="badge bg-light text-dark mb-2">{{ ucfirst(str_replace('_',' ',$employee->role)) }}</span>
                 <p class="text-muted small mb-1">{{ $employee->employee_id }}</p>
@@ -54,7 +58,15 @@
                     <div class="col-md-6"><label class="text-muted small">Phone</label><p class="fw-semibold mb-0">{{ $employee->phone ?? '—' }}</p></div>
                     <div class="col-md-6"><label class="text-muted small">Email</label><p class="fw-semibold mb-0">{{ $employee->email ?? '—' }}</p></div>
                     <div class="col-md-6"><label class="text-muted small">Date of Birth</label><p class="fw-semibold mb-0">{{ $employee->date_of_birth?->format('d M Y') ?? '—' }}</p></div>
-                    <div class="col-md-6"><label class="text-muted small">NID</label><p class="fw-semibold mb-0">{{ $employee->nid ?? '—' }}</p></div>
+                    <div class="col-md-6">
+                        <label class="text-muted small">NID</label>
+                        <p class="fw-semibold mb-0">
+                            {{ $employee->nid ?? '—' }}
+                            @if($employee->nid_photo)
+                                <a href="{{ asset('storage/' . $employee->nid_photo) }}" target="_blank" class="ms-2 badge bg-light text-primary border"><i class="bi bi-file-earmark-image me-1"></i>View Photo</a>
+                            @endif
+                        </p>
+                    </div>
                     <div class="col-md-6"><label class="text-muted small">Hire Date</label><p class="fw-semibold mb-0">{{ $employee->hire_date->format('d M Y') }}</p></div>
                     <div class="col-md-6"><label class="text-muted small">Salary</label><p class="fw-semibold mb-0">৳{{ number_format($employee->salary,0) }}</p></div>
                     <div class="col-md-6"><label class="text-muted small">Emergency Contact</label><p class="fw-semibold mb-0">{{ $employee->emergency_contact ?? '—' }}</p></div>

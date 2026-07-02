@@ -1,5 +1,22 @@
 @extends('layouts.app')
 @section('title', 'Add Menu Item')
+
+@push('styles')
+<link href="https://unpkg.com/filepond/dist/filepond.css" rel="stylesheet">
+<link href="https://unpkg.com/filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css" rel="stylesheet">
+<style>
+    .filepond--root { font-family: 'Inter', sans-serif; }
+    .filepond--panel-root { background: #f8fafc; border: 2px dashed #e2e8f0; border-radius: 10px; }
+    .filepond--drop-label { color: #64748b; font-size: 0.875rem; }
+    .filepond--label-action { color: var(--primary, #8B0000); font-weight: 600; text-decoration: underline; }
+    .filepond--item-panel { background: var(--secondary, #0A2647); }
+    .filepond--file-action-button { background: rgba(139,0,0,0.85); }
+    [data-filepond-item-state='processing-complete'] .filepond--item-panel { background: #1a7f5a; }
+    [data-filepond-item-state='error'] .filepond--item-panel,
+    [data-filepond-item-state='aborted'] .filepond--item-panel { background: #dc2626; }
+</style>
+@endpush
+
 @section('content')
 <div class="d-flex align-items-center gap-3 mb-4">
     <a href="{{ route('menu.index') }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></a>
@@ -64,10 +81,16 @@
                             <label class="form-label">Barcode</label>
                             <input type="text" name="barcode" class="form-control" value="{{ old('barcode') }}">
                         </div>
+
+                        {{-- FilePond Image Upload --}}
                         <div class="col-12">
-                            <label class="form-label">Image</label>
-                            <input type="file" name="image" class="form-control" accept="image/*">
+                            <label class="form-label fw-semibold">Item Image</label>
+                            <input type="file" id="menuItemImage" name="image" accept="image/*">
+                            <div class="text-muted" style="font-size:0.78rem;margin-top:4px">
+                                <i class="bi bi-info-circle me-1"></i>Drag & drop or click to upload. Max 4MB. JPG, PNG, GIF, WebP supported.
+                            </div>
                         </div>
+
                         <div class="col-md-4">
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" name="is_available" value="1" id="avail" {{ old('is_available',1)?'checked':'' }}>
@@ -97,3 +120,27 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script src="https://unpkg.com/filepond-plugin-image-preview/dist/filepond-plugin-image-preview.js"></script>
+<script src="https://unpkg.com/filepond-plugin-file-validate-size/dist/filepond-plugin-file-validate-size.js"></script>
+<script src="https://unpkg.com/filepond-plugin-file-validate-type/dist/filepond-plugin-file-validate-type.js"></script>
+<script src="https://unpkg.com/filepond/dist/filepond.js"></script>
+<script>
+    FilePond.registerPlugin(
+        FilePondPluginImagePreview,
+        FilePondPluginFileValidateSize,
+        FilePondPluginFileValidateType
+    );
+
+    FilePond.create(document.querySelector('#menuItemImage'), {
+        allowMultiple: false,
+        maxFileSize: '4MB',
+        acceptedFileTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'],
+        labelIdle: '<i class="bi bi-cloud-arrow-up" style="font-size:1.5rem;color:var(--primary)"></i><br><span style="font-weight:600;color:#374151">Drag & Drop item image</span><br><span style="color:#6b7280;font-size:0.82rem"> or <span class="filepond--label-action">Browse</span></span>',
+        imagePreviewHeight: 180,
+        server: null,
+        instantUpload: false,
+    });
+</script>
+@endpush

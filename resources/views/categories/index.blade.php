@@ -21,8 +21,8 @@
                     <tr>
                         <td>{{ $loop->iteration }}</td>
                         <td>
-                            @if($cat->image)
-                            <img src="{{ asset('storage/'.$cat->image) }}" width="40" height="40" style="border-radius:8px;object-fit:cover">
+                            @if($cat->hasMedia('image') || $cat->image)
+                            <img src="{{ $cat->image_url }}" width="40" height="40" style="border-radius:8px;object-fit:cover">
                             @else
                             <div style="width:40px;height:40px;background:#f1f5f9;border-radius:8px;display:flex;align-items:center;justify-content:center"><i class="bi bi-tag text-muted"></i></div>
                             @endif
@@ -44,7 +44,7 @@
                                 <a href="{{ route('categories.edit',$cat) }}" class="btn btn-sm btn-outline-primary py-0 px-2"><i class="bi bi-pencil"></i></a>
                                 @endcan
                                 @can('delete categories')
-                                <form method="POST" action="{{ route('categories.destroy',$cat) }}" onsubmit="return confirm('Delete this category?')">
+                                <form method="POST" action="{{ route('categories.destroy',$cat) }}" data-confirm="Delete this category?" data-confirm-button="Yes, delete!">
                                     @csrf @method('DELETE')
                                     <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2"><i class="bi bi-trash"></i></button>
                                 </form>

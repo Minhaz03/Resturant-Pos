@@ -11,7 +11,7 @@ class Employee extends Model
 
     protected $fillable = [
         'user_id', 'employee_id', 'name', 'phone', 'email', 'address',
-        'dob', 'gender', 'role', 'department', 'salary', 'hire_date',
+        'dob', 'date_of_birth', 'gender', 'role', 'department', 'salary', 'hire_date',
         'termination_date', 'avatar', 'nid', 'emergency_contact',
         'bank_account', 'status',
     ];
@@ -22,6 +22,16 @@ class Employee extends Model
         'termination_date' => 'date',
         'salary' => 'decimal:2',
     ];
+
+    public function getDateOfBirthAttribute()
+    {
+        return $this->dob;
+    }
+
+    public function setDateOfBirthAttribute($value)
+    {
+        $this->attributes['dob'] = $value;
+    }
 
     public function user()
     {

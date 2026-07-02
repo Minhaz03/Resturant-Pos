@@ -303,9 +303,35 @@
     };
 
     document.addEventListener('DOMContentLoaded', function () {
-        // Intercept native confirms in forms
+        // Intercept confirms via data-confirm attribute
         document.body.addEventListener('submit', function (e) {
             const form = e.target;
+            const confirmMsg = form.getAttribute('data-confirm');
+            if (confirmMsg) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                const title = form.getAttribute('data-confirm-title') || 'Are you sure?';
+                const buttonText = form.getAttribute('data-confirm-button') || 'Yes, proceed!';
+                const icon = form.getAttribute('data-confirm-icon') || 'warning';
+                
+                Swal.fire({
+                    title: title,
+                    text: confirmMsg,
+                    icon: icon,
+                    showCancelButton: true,
+                    confirmButtonColor: '#8B0000',
+                    cancelButtonColor: '#0A2647',
+                    confirmButtonText: buttonText,
+                    cancelButtonText: 'Cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
+                return;
+            }
+
+            // Intercept native confirms in forms (backward compatibility)
             const onsubmitAttr = form.getAttribute('onsubmit');
             if (onsubmitAttr && onsubmitAttr.includes('confirm(')) {
                 e.preventDefault();

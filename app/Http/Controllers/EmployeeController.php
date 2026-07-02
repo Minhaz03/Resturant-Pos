@@ -32,7 +32,7 @@ class EmployeeController extends Controller
             'phone'             => 'required|string',
             'email'             => 'nullable|email',
             'address'           => 'nullable|string',
-            'dob'               => 'nullable|date',
+            'date_of_birth'     => 'nullable|date',
             'gender'            => 'nullable|in:male,female,other',
             'role'              => 'required|string',
             'department'        => 'nullable|string',
@@ -73,18 +73,20 @@ class EmployeeController extends Controller
     public function update(Request $request, Employee $employee)
     {
         $data = $request->validate([
-            'name'      => 'required|string|max:100',
-            'phone'     => 'required|string',
-            'email'     => 'nullable|email',
-            'address'   => 'nullable|string',
-            'role'      => 'required|string',
-            'department'=> 'nullable|string',
-            'salary'    => 'required|numeric|min:0',
-            'hire_date' => 'required|date',
-            'status'    => 'required|in:active,inactive,terminated',
-            'avatar'    => 'nullable|image|max:2048',
-            'nid'       => 'nullable|string|max:20',
-            'nid_photo' => 'nullable|image|max:4096',
+            'name'              => 'required|string|max:100',
+            'phone'             => 'required|string',
+            'email'             => 'nullable|email',
+            'address'           => 'nullable|string',
+            'role'              => 'required|string',
+            'department'        => 'nullable|string',
+            'salary'            => 'required|numeric|min:0',
+            'hire_date'         => 'required|date',
+            'date_of_birth'     => 'nullable|date',
+            'emergency_contact' => 'nullable|string',
+            'status'            => 'required|in:active,inactive,terminated',
+            'avatar'            => 'nullable|image|max:2048',
+            'nid'               => 'nullable|string|max:20',
+            'nid_photo'         => 'nullable|image|max:4096',
         ]);
 
         if ($request->hasFile('avatar')) {

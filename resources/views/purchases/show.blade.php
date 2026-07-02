@@ -10,7 +10,7 @@
     <div class="ms-auto d-flex gap-2">
         @if($purchaseOrder->status === 'ordered' || $purchaseOrder->status === 'partial')
         @can('edit purchase_orders')
-        <form method="POST" action="{{ route('purchases.receive',$purchaseOrder) }}" onsubmit="return confirm('Mark all items as received?')">@csrf
+        <form method="POST" action="{{ route('purchases.receive',$purchaseOrder) }}" data-confirm="Mark all items as received?" data-confirm-title="Receive Items" data-confirm-button="Yes, receive!" data-confirm-icon="question">@csrf
             <button type="submit" class="btn btn-sm btn-success"><i class="bi bi-check-all me-1"></i>Receive All</button>
         </form>
         @endcan

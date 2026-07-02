@@ -63,8 +63,8 @@
             @foreach($cat->activeMenuItems as $item)
             <div class="col-xl-2 col-lg-3 col-md-4 col-6 pos-item-wrap" data-cat="{{ $cat->id }}" data-name="{{ strtolower($item->name) }}" data-sku="{{ $item->sku }}" data-barcode="{{ $item->barcode }}" data-price="{{ $item->effective_price }}">
                 <div class="pos-item" onclick="addToCart({{ $item->id }},'{{ addslashes($item->name) }}',{{ $item->effective_price }})">
-                    @if($item->image)
-                    <img src="{{ asset('storage/'.$item->image) }}" alt="{{ $item->name }}">
+                    @if($item->hasMedia('image') || $item->image)
+                    <img src="{{ $item->image_url }}" alt="{{ $item->name }}">
                     @else
                     <div class="item-img-placeholder"><i class="bi bi-image text-muted fs-4"></i></div>
                     @endif

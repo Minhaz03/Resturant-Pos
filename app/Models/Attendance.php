@@ -16,6 +16,16 @@ class Attendance extends Model
         'working_hours' => 'decimal:2',
     ];
 
+    public function getCheckInAttribute($value)
+    {
+        return $value ? \Carbon\Carbon::parse($value) : null;
+    }
+
+    public function getCheckOutAttribute($value)
+    {
+        return $value ? \Carbon\Carbon::parse($value) : null;
+    }
+
     public function employee()
     {
         return $this->belongsTo(Employee::class);

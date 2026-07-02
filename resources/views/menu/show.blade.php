@@ -12,8 +12,8 @@
     <div class="col-lg-4">
         <div class="card">
             <div style="height:250px;overflow:hidden;border-radius:8px 8px 0 0">
-                @if($menuItem->image)
-                <img src="{{ asset('storage/'.$menuItem->image) }}" class="w-100 h-100" style="object-fit:cover">
+                @if($menuItem->hasMedia('image') || $menuItem->image)
+                <img src="{{ $menuItem->image_url }}" class="w-100 h-100" style="object-fit:cover">
                 @else
                 <div class="w-100 h-100 d-flex align-items-center justify-content-center" style="background:#f5f7fa"><i class="bi bi-image text-muted" style="font-size:4rem"></i></div>
                 @endif

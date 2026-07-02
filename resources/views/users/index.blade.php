@@ -33,7 +33,7 @@
                         @can('edit users')<a href="{{ route('users.edit',$u) }}" class="btn btn-sm btn-outline-primary py-0 px-2"><i class="bi bi-pencil"></i></a>@endcan
                         @can('delete users')
                         @if($u->id !== auth()->id())
-                        <form method="POST" action="{{ route('users.destroy',$u) }}" onsubmit="return confirm('Delete user?')">@csrf @method('DELETE')<button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2"><i class="bi bi-trash"></i></button></form>
+                        <form method="POST" action="{{ route('users.destroy',$u) }}" data-confirm="Delete user?" data-confirm-button="Yes, delete!">@csrf @method('DELETE')<button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2"><i class="bi bi-trash"></i></button></form>
                         @endif
                         @endcan
                     </div>

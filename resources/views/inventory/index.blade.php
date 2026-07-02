@@ -62,7 +62,7 @@
                         @can('edit inventory')
                         <button class="btn btn-sm btn-outline-success py-0 px-2" data-bs-toggle="modal" data-bs-target="#adjustModal{{ $item->id }}" title="Adjust Stock"><i class="bi bi-arrow-repeat"></i></button>
                         @endcan
-                        @can('delete inventory')<form method="POST" action="{{ route('inventory.destroy',$item) }}" onsubmit="return confirm('Delete?')">@csrf @method('DELETE')<button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2"><i class="bi bi-trash"></i></button></form>@endcan
+                        @can('delete inventory')<form method="POST" action="{{ route('inventory.destroy',$item) }}" data-confirm="Delete inventory item?" data-confirm-button="Yes, delete!">@csrf @method('DELETE')<button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2"><i class="bi bi-trash"></i></button></form>@endcan
                     </div>
                 </td>
             </tr>

@@ -61,8 +61,8 @@
                         @forelse($menuItems as $item)
                             <tr>
                                 <td>
-                                    @if ($item->image)
-                                        <img src="{{ asset('storage/' . $item->image) }}" width="44" height="44"
+                                    @if ($item->hasMedia('image') || $item->image)
+                                        <img src="{{ $item->image_url }}" width="44" height="44"
                                             style="border-radius:8px;object-fit:cover">
                                     @else
                                         <div
@@ -101,7 +101,7 @@
                                         @endcan
                                         @can('delete menu')
                                             <form method="POST" action="{{ route('menu.destroy', $item) }}"
-                                                onsubmit="return confirm('Delete this item?')">
+                                                data-confirm="Delete this item?" data-confirm-button="Yes, delete!">
                                                 @csrf @method('DELETE')
                                                 <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2"><i
                                                         class="bi bi-trash"></i></button>

@@ -34,7 +34,7 @@
                             onclick="viewSupplier({{ json_encode($s) }})"
                             title="View Details"><i class="bi bi-eye"></i></button>
                         @can('edit suppliers')<a href="{{ route('suppliers.edit',$s) }}" class="btn btn-sm btn-outline-primary py-0 px-2"><i class="bi bi-pencil"></i></a>@endcan
-                        @can('delete suppliers')<form method="POST" action="{{ route('suppliers.destroy',$s) }}" onsubmit="return confirm('Delete supplier?')">@csrf @method('DELETE')<button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2"><i class="bi bi-trash"></i></button></form>@endcan
+                        @can('delete suppliers')<form method="POST" action="{{ route('suppliers.destroy',$s) }}" data-confirm="Delete supplier?" data-confirm-button="Yes, delete!">@csrf @method('DELETE')<button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2"><i class="bi bi-trash"></i></button></form>@endcan
                     </div>
                 </td>
             </tr>

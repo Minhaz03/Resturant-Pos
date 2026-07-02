@@ -23,21 +23,26 @@ class CategoryController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'name' => 'required|string|max:100|unique:categories',
-            'description' => 'nullable|string',
-            'image' => 'nullable|image|max:2048',
+            'name'       => 'required|string|max:100|unique:categories',
+            'description'=> 'nullable|string',
+            'image'      => 'nullable|image|max:4096',
             'sort_order' => 'nullable|integer',
-            'status' => 'boolean',
+            'status'     => 'boolean',
         ]);
 
-        $data['slug'] = Str::slug($data['name']);
+        $data['slug']   = Str::slug($data['name']);
         $data['status'] = $request->boolean('status', true);
 
+        // Remove image from fillable data — Spatie handles it separately
+        unset($data['image']);
+
+        $category = Category::create($data);
+
         if ($request->hasFile('image')) {
-            $data['image'] = $request->file('image')->store('categories', 'public');
+            $category->addMediaFromRequest('image')
+                     ->toMediaCollection('image');
         }
 
-        Category::create($data);
         return redirect()->route('categories.index')->with('success', 'Category created successfully.');
     }
 
@@ -49,22 +54,35 @@ class CategoryController extends Controller
     public function update(Request $request, Category $category)
     {
         $data = $request->validate([
-            'name' => 'required|string|max:100|unique:categories,name,' . $category->id,
+            'name'        => 'required|string|max:100|unique:categories,name,' . $category->id,
             'description' => 'nullable|string',
-            'image' => 'nullable|image|max:2048',
-            'sort_order' => 'nullable|integer',
-            'status' => 'boolean',
+            'image'       => 'nullable|image|max:4096',
+            'sort_order'  => 'nullable|integer',
+            'status'      => 'boolean',
         ]);
 
-        $data['slug'] = Str::slug($data['name']);
+        $data['slug']   = Str::slug($data['name']);
         $data['status'] = $request->boolean('status', true);
 
-        if ($request->hasFile('image')) {
-            if ($category->image) Storage::disk('public')->delete($category->image);
-            $data['image'] = $request->file('image')->store('categories', 'public');
-        }
+        // Remove image from fillable data — Spatie handles it separately
+        unset($data['image']);
 
         $category->update($data);
+
+        if ($request->hasFile('image')) {
+            // clearMediaCollection removes the old file before adding new
+            $category->clearMediaCollection('image');
+            $category->addMediaFromRequest('image')
+                     ->toMediaCollection('image');
+        }
+
+        // Handle explicit image removal
+        if ($request->input('remove_image') == '1') {
+            $category->clearMediaCollection('image');
+            // Also clear legacy column
+            $category->update(['image' => null]);
+        }
+
         return redirect()->route('categories.index')->with('success', 'Category updated successfully.');
     }
 
@@ -73,6 +91,8 @@ class CategoryController extends Controller
         if ($category->menuItems()->count() > 0) {
             return back()->with('error', 'Cannot delete category with menu items.');
         }
+        // Spatie automatically handles media cleanup on delete
+        // Also clean up legacy storage image if it exists
         if ($category->image) Storage::disk('public')->delete($category->image);
         $category->delete();
         return redirect()->route('categories.index')->with('success', 'Category deleted successfully.');
