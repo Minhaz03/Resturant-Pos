@@ -6,6 +6,7 @@ use App\Models\InventoryItem;
 use App\Models\InventoryTransaction;
 use App\Models\Supplier;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class InventoryController extends Controller
 {
@@ -28,6 +29,10 @@ class InventoryController extends Controller
 
     public function store(Request $request)
     {
+        if (empty($request->sku)) {
+            $request->merge(['sku' => 'INV-' . strtoupper(Str::random(8))]);
+        }
+
         $data = $request->validate([
             'name' => 'required|string|max:150',
             'sku' => 'required|string|unique:inventory_items',
@@ -39,9 +44,12 @@ class InventoryController extends Controller
             'min_quantity' => 'required|numeric|min:0',
             'max_quantity' => 'nullable|numeric',
             'unit_cost' => 'required|numeric|min:0',
+            'track_inventory' => 'nullable|boolean',
+            'location' => 'nullable|string|max:100',
         ]);
 
         $data['total_value'] = $data['quantity'] * $data['unit_cost'];
+        $data['track_inventory'] = $request->boolean('track_inventory');
         $data['status'] = 'active';
         $item = InventoryItem::create($data);
 
@@ -54,9 +62,9 @@ class InventoryController extends Controller
 
     public function edit(InventoryItem $inventory)
     {
-        $inventoryItem = $inventory;
+        $item = $inventory;
         $suppliers = Supplier::where('status', 'active')->get();
-        return view('inventory.edit', compact('inventoryItem', 'suppliers'));
+        return view('inventory.edit', compact('item', 'suppliers'));
     }
 
     public function update(Request $request, InventoryItem $inventory)
@@ -71,8 +79,12 @@ class InventoryController extends Controller
             'min_quantity' => 'required|numeric|min:0',
             'max_quantity' => 'nullable|numeric',
             'unit_cost' => 'required|numeric|min:0',
+            'description' => 'nullable|string',
+            'track_inventory' => 'nullable|boolean',
+            'location' => 'nullable|string|max:100',
         ]);
         $data['total_value'] = $inventoryItem->quantity * $data['unit_cost'];
+        $data['track_inventory'] = $request->boolean('track_inventory');
         $inventoryItem->update($data);
         return redirect()->route('inventory.index')->with('success', 'Inventory item updated.');
     }
@@ -96,9 +108,9 @@ class InventoryController extends Controller
 
     public function show(InventoryItem $inventory)
     {
-        $inventoryItem = $inventory;
-        $transactions = $inventoryItem->transactions()->with('createdBy')->latest()->paginate(20);
-        return view('inventory.show', compact('inventoryItem', 'transactions'));
+        $item = $inventory;
+        $transactions = $item->transactions()->with('createdBy')->latest()->paginate(20);
+        return view('inventory.show', compact('item', 'transactions'));
     }
 
     public function destroy(InventoryItem $inventory)

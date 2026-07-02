@@ -12,7 +12,7 @@ class InventoryItem extends Model
     protected $fillable = [
         'supplier_id', 'name', 'sku', 'category', 'description',
         'unit', 'quantity', 'min_quantity', 'max_quantity',
-        'unit_cost', 'total_value', 'track_inventory', 'status',
+        'unit_cost', 'total_value', 'track_inventory', 'status', 'location',
     ];
 
     protected $casts = [
