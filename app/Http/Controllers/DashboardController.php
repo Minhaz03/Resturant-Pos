@@ -44,11 +44,11 @@ class DashboardController extends Controller
         $pendingDeliveries = DeliveryOrder::whereIn('status', ['pending', 'assigned', 'picked_up', 'on_way'])->count();
 
         // Recent orders
-        $recentOrders = Order::with(['table', 'customer', 'items'])
+        $recentOrders = Order::with(['tables', 'customer', 'items'])
             ->latest()->take(10)->get();
 
         // Active orders
-        $activeOrders = Order::active()->with(['table', 'customer'])->latest()->get();
+        $activeOrders = Order::active()->with(['tables', 'customer'])->latest()->get();
 
         // Top selling items (last 30 days)
         $topSellingItems = DB::table('order_items')

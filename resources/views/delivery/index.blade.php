@@ -15,7 +15,7 @@
         <input type="text" name="search" class="form-control form-control-sm" placeholder="Search order..." value="{{ request('search') }}" style="max-width:200px">
         <select name="status" class="form-select form-select-sm" style="max-width:160px">
             <option value="">All Status</option>
-            @foreach(['pending','assigned','picked_up','in_transit','delivered','failed','cancelled'] as $s)
+            @foreach(['pending','assigned','picked_up','on_way','delivered','failed','cancelled'] as $s)
             <option value="{{ $s }}" {{ request('status')==$s?'selected':'' }}>{{ ucfirst(str_replace('_',' ',$s)) }}</option>
             @endforeach
         </select>
@@ -29,16 +29,16 @@
         <tbody>
             @forelse($deliveries as $d)
             <tr>
-                <td class="fw-semibold small" style="color:var(--secondary)">{{ $d->tracking_code }}</td>
+                <td class="fw-semibold small" style="color:var(--secondary)">{{ $d->tracking_code ?? '—' }}</td>
                 <td>{{ $d->order?->order_number ?? '—' }}</td>
                 <td>
-                    <div>{{ $d->customer_name ?? $d->order?->customer?->name ?? '—' }}</div>
-                    <div class="text-muted small">{{ $d->customer_phone ?? '' }}</div>
+                    <div>{{ $d->order?->customer?->name ?? 'Guest' }}</div>
+                    <div class="text-muted small">{{ $d->delivery_phone ?? $d->order?->customer?->phone ?? '—' }}</div>
                 </td>
                 <td class="text-muted small" style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ $d->delivery_address ?? '—' }}</td>
-                <td>{{ $d->rider?->name ?? '<span class="text-muted">Unassigned</span>' }}</td>
+                <td>{!! $d->rider?->name ?? '<span class="text-muted small">Unassigned</span>' !!}</td>
                 <td>
-                    <span class="badge {{ match($d->status ?? 'pending'){'pending'=>'bg-warning text-dark','assigned'=>'bg-info','picked_up'=>'bg-primary','in_transit'=>'bg-primary','delivered'=>'bg-success','failed'=>'bg-danger','cancelled'=>'bg-secondary',default=>'bg-secondary'} }}">
+                    <span class="badge {{ match($d->status ?? 'pending'){'pending'=>'bg-warning text-dark','assigned'=>'bg-info','picked_up'=>'bg-primary','on_way'=>'bg-primary','delivered'=>'bg-success','failed'=>'bg-danger','cancelled'=>'bg-secondary',default=>'bg-secondary'} }}">
                         {{ ucfirst(str_replace('_',' ',$d->status ?? 'pending')) }}
                     </span>
                 </td>
@@ -48,15 +48,18 @@
                         @if(!$d->rider_id && ($d->status=='pending' || !$d->status))
                         <button class="btn btn-sm btn-outline-primary py-0 px-2" data-bs-toggle="modal" data-bs-target="#assignModal{{ $d->id }}" title="Assign Rider"><i class="bi bi-person-plus"></i></button>
                         @endif
-                        @if(in_array($d->status,['assigned','picked_up','in_transit']))
+                        @if(in_array($d->status,['assigned','picked_up','on_way']))
                         <form method="POST" action="{{ route('delivery.update-status',$d) }}">@csrf @method('PATCH')
                             <select name="status" class="form-select form-select-sm" style="width:120px" onchange="this.form.submit()">
                                 <option value="">Update...</option>
-                                @foreach(['picked_up'=>'Picked Up','in_transit'=>'In Transit','delivered'=>'Delivered','failed'=>'Failed'] as $val=>$lbl)
+                                @foreach(['picked_up'=>'Picked Up','on_way'=>'In Transit','delivered'=>'Delivered','failed'=>'Failed'] as $val=>$lbl)
                                 <option value="{{ $val }}" {{ $d->status==$val?'selected':'' }}>{{ $lbl }}</option>
                                 @endforeach
                             </select>
                         </form>
+                        @endif
+                        @if(!(!$d->rider_id && ($d->status=='pending' || !$d->status)) && !in_array($d->status,['assigned','picked_up','on_way']))
+                        <span class="text-muted small">—</span>
                         @endif
                     </div>
                 </td>
@@ -65,7 +68,7 @@
             <div class="modal fade" id="assignModal{{ $d->id }}" tabindex="-1">
                 <div class="modal-dialog modal-sm"><div class="modal-content">
                     <div class="modal-header"><h6 class="modal-title">Assign Rider</h6><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-                    <form method="POST" action="{{ route('delivery.assign',$d) }}">@csrf @method('PATCH')
+                    <form method="POST" action="{{ route('delivery.assign',$d) }}">@csrf
                     <div class="modal-body">
                         <select name="rider_id" class="form-select" required>
                             <option value="">Select Rider</option>

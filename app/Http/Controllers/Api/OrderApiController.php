@@ -10,13 +10,13 @@ class OrderApiController extends Controller
 {
     public function index()
     {
-        $orders = Order::with(['items.menuItem', 'table', 'customer'])->latest()->paginate(20);
+        $orders = Order::with(['items.menuItem', 'tables', 'customer'])->latest()->paginate(20);
         return response()->json($orders);
     }
 
     public function show(Order $order)
     {
-        $order->load(['items.menuItem', 'table', 'customer', 'payment']);
+        $order->load(['items.menuItem', 'tables', 'customer', 'payment']);
         return response()->json(['data' => $order]);
     }
 

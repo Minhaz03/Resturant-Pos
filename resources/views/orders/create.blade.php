@@ -5,7 +5,10 @@
 .menu-item-card { cursor:pointer; transition:all 0.2s; border:2px solid transparent; }
 .menu-item-card:hover { border-color:var(--primary); transform:translateY(-2px); }
 .cart-item { border-bottom: 1px solid #f1f5f9; }
+.cart-item { border-bottom: 1px solid #f1f5f9; }
 </style>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
 @endpush
 @section('content')
 <div class="d-flex align-items-center gap-3 mb-4">
@@ -51,8 +54,7 @@
             <div class="card-header">
                 <div class="row g-2">
                     <div class="col-6">
-                        <select name="table_id" id="tableId" class="form-select form-select-sm">
-                            <option value="">Select Table</option>
+                        <select name="table_ids[]" id="tableId" class="form-select form-select-sm table-select2" multiple>
                             @foreach($tables as $t)
                             <option value="{{ $t->id }}">{{ $t->table_number }} ({{ $t->capacity }}p)</option>
                             @endforeach
@@ -90,7 +92,16 @@
 <form id="orderForm" method="POST" action="{{ route('orders.store') }}">@csrf</form>
 @endsection
 @push('scripts')
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
+$(document).ready(function() {
+    $('.table-select2').select2({
+        theme: 'bootstrap-5',
+        placeholder: "Select Table(s)",
+        allowClear: true
+    });
+});
 let cart = {};
 function addToCart(id, name, price) {
     if (cart[id]) cart[id].qty++;
@@ -139,8 +150,10 @@ function submitOrder() {
     const form = document.getElementById('orderForm');
     form.innerHTML = `<input type="hidden" name="_token" value="{{ csrf_token() }}">`;
     form.innerHTML += `<input type="hidden" name="type" value="${document.getElementById('orderType').value}">`;
-    const tableId = document.getElementById('tableId').value;
-    if (tableId) form.innerHTML += `<input type="hidden" name="table_id" value="${tableId}">`;
+    const tableIds = Array.from(document.getElementById('tableId').selectedOptions).map(opt => opt.value);
+    tableIds.forEach(id => {
+        form.innerHTML += `<input type="hidden" name="table_ids[]" value="${id}">`;
+    });
     form.innerHTML += `<input type="hidden" name="notes" value="${document.getElementById('orderNotes').value}">`;
     items.forEach((item, i) => {
         form.innerHTML += `<input type="hidden" name="items[${i}][menu_item_id]" value="${item.id}">`;

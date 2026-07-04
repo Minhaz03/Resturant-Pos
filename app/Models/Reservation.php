@@ -7,14 +7,15 @@ use Illuminate\Database\Eloquent\Model;
 class Reservation extends Model
 {
     protected $fillable = [
-        'reservation_number', 'customer_id', 'table_id', 'customer_name',
+        'reservation_number', 'customer_id', 'customer_name',
         'customer_phone', 'customer_email', 'reservation_date', 'reservation_time',
-        'guest_count', 'status', 'notes', 'confirmed_at', 'created_by',
+        'guest_count', 'status', 'notes', 'confirmed_at', 'created_by', 'deposit_amount',
     ];
 
     protected $casts = [
         'reservation_date' => 'date',
         'confirmed_at' => 'datetime',
+        'deposit_amount' => 'decimal:2',
     ];
 
     public function customer()
@@ -22,9 +23,9 @@ class Reservation extends Model
         return $this->belongsTo(Customer::class);
     }
 
-    public function table()
+    public function tables()
     {
-        return $this->belongsTo(Table::class);
+        return $this->belongsToMany(Table::class);
     }
 
     public function createdBy()

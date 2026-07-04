@@ -16,7 +16,7 @@ class OrderController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Order::with(['table', 'customer', 'items', 'payment']);
+        $query = Order::with(['tables', 'customer', 'items', 'payment']);
         if ($request->status) $query->where('status', $request->status);
         if ($request->type) $query->where('type', $request->type);
         if ($request->date) $query->whereDate('created_at', $request->date);
@@ -29,8 +29,14 @@ class OrderController extends Controller
 
     public function show(Order $order)
     {
-        $order->load(['table', 'customer', 'items.menuItem', 'payment', 'invoice', 'delivery', 'waiter', 'kitchenOrders']);
+        $order->load(['tables', 'customer', 'items.menuItem', 'payment', 'invoice', 'delivery', 'waiter', 'kitchenOrders']);
         return view('orders.show', compact('order'));
+    }
+
+    public function print(Order $order)
+    {
+        $order->load(['tables', 'customer', 'items', 'payment']);
+        return view('orders.print', compact('order'));
     }
 
     public function create()
@@ -48,6 +54,8 @@ class OrderController extends Controller
             'items' => 'required|array|min:1',
             'items.*.menu_item_id' => 'required|exists:menu_items,id',
             'items.*.quantity' => 'required|integer|min:1',
+            'table_ids' => 'nullable|array',
+            'table_ids.*' => 'exists:tables,id',
         ]);
 
         DB::beginTransaction();
@@ -84,7 +92,6 @@ class OrderController extends Controller
 
             $order = Order::create([
                 'order_number' => $orderNumber,
-                'table_id' => $request->table_id,
                 'customer_id' => $request->customer_id,
                 'waiter_id' => $request->waiter_id,
                 'type' => $request->type,
@@ -105,8 +112,9 @@ class OrderController extends Controller
                 ]);
             }
 
-            if ($request->table_id) {
-                Table::find($request->table_id)?->update(['status' => 'occupied']);
+            if (!empty($request->table_ids)) {
+                $order->tables()->sync($request->table_ids);
+                Table::whereIn('id', $request->table_ids)->update(['status' => 'occupied']);
             }
 
             // Create invoice
@@ -150,18 +158,60 @@ class OrderController extends Controller
 
         $order->update($updateData);
 
-        if ($newStatus === 'completed' && $order->table_id) {
-            Table::find($order->table_id)?->update(['status' => 'available']);
-        }
-
-        if ($newStatus === 'cancelled' && $order->table_id) {
-            Table::find($order->table_id)?->update(['status' => 'available']);
+        if (in_array($newStatus, ['completed', 'cancelled']) && $order->tables->count() > 0) {
+            Table::whereIn('id', $order->tables->pluck('id'))->update(['status' => 'available']);
         }
 
         if (request()->wantsJson()) {
             return response()->json(['success' => true, 'status' => $newStatus]);
         }
         return back()->with('success', 'Order status updated to ' . ucfirst($newStatus));
+    }
+
+    public function settlePayment(Request $request, Order $order)
+    {
+        $request->validate([
+            'payment_method' => 'required|in:cash,card,mobile_banking,split',
+            'payment_amount' => 'required|numeric|min:' . $order->total_amount,
+        ]);
+
+        DB::beginTransaction();
+        try {
+            $paymentNumber = 'PAY-' . date('Ymd') . '-' . str_pad($order->id, 5, '0', STR_PAD_LEFT);
+            \App\Models\Payment::create([
+                'order_id' => $order->id,
+                'payment_number' => $paymentNumber,
+                'amount' => $order->total_amount,
+                'method' => $request->payment_method,
+                'status' => 'completed',
+                'change_amount' => max(0, $request->payment_amount - $order->total_amount),
+                'split_details' => $request->split_details,
+                'processed_by' => auth()->id(),
+                'paid_at' => now(),
+            ]);
+
+            if ($order->invoice) {
+                $order->invoice->update([
+                    'status' => 'paid',
+                    'paid_at' => now(),
+                ]);
+            }
+
+            $order->update([
+                'status' => 'completed',
+                'completed_at' => now()
+            ]);
+
+            if ($order->tables->count() > 0) {
+                Table::whereIn('id', $order->tables->pluck('id'))->update(['status' => 'available']);
+            }
+
+            DB::commit();
+            return back()->with('success', 'Payment settled successfully. Order completed.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Failed to settle payment: ' . $e->getMessage());
+        }
     }
 
     public function destroy(Order $order)

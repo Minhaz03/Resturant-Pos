@@ -10,7 +10,7 @@ class Order extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'order_number', 'table_id', 'customer_id', 'waiter_id', 'cashier_id',
+        'order_number', 'customer_id', 'waiter_id', 'cashier_id',
         'type', 'status', 'subtotal', 'tax_amount', 'discount_amount',
         'delivery_charge', 'total_amount', 'coupon_code', 'coupon_discount',
         'loyalty_points_used', 'loyalty_points_earned', 'notes', 'kitchen_notes',
@@ -30,9 +30,9 @@ class Order extends Model
         'completed_at' => 'datetime',
     ];
 
-    public function table()
+    public function tables()
     {
-        return $this->belongsTo(Table::class);
+        return $this->belongsToMany(Table::class);
     }
 
     public function customer()

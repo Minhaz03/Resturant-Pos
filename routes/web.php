@@ -52,17 +52,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Orders
     Route::resource('orders', OrderController::class)->except(['edit', 'update']);
+    Route::get('orders/{order}/print', [OrderController::class, 'print'])->name('orders.print');
     Route::patch('orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.update-status');
+    Route::post('orders/{order}/settle', [OrderController::class, 'settlePayment'])->name('orders.settle');
 
     // POS
     Route::get('/pos', [POSController::class, 'index'])->name('pos.index');
     Route::post('/pos/process', [POSController::class, 'processOrder'])->name('pos.process');
     Route::get('/pos/search-product', [POSController::class, 'searchProduct'])->name('pos.search-product');
     Route::post('/pos/validate-coupon', [POSController::class, 'validateCoupon'])->name('pos.validate-coupon');
+    Route::get('/pos/active-reservations', [POSController::class, 'getActiveReservations'])->name('pos.active-reservations');
 
     // Kitchen (KDS)
     Route::get('/kitchen', [KitchenController::class, 'index'])->name('kitchen.index');
     Route::patch('/kitchen/{kitchenOrder}/status', [KitchenController::class, 'updateStatus'])->name('kitchen.update-status');
+    Route::patch('/kitchen/order/{order}/serve', [KitchenController::class, 'serveOrder'])->name('kitchen.serve-order');
+    Route::patch('/kitchen/order/{order}/status', [KitchenController::class, 'updateOrderStatus'])->name('kitchen.update-order-status');
     Route::get('/kitchen/new-orders', [KitchenController::class, 'getNewOrders'])->name('kitchen.new-orders');
 
     // Customers

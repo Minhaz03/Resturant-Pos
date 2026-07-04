@@ -35,6 +35,8 @@
     }
     #receipt-print { display: none; }
 </style>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
 @endpush
 @section('content')
 <div class="pos-layout">
@@ -83,18 +85,20 @@
         <div class="card-header py-2">
             <div class="row g-2">
                 <div class="col-7">
-                    <select id="cartCustomer" class="form-select form-select-sm">
-                        <option value="">Walk-in Customer</option>
-                        @foreach($customers as $c)
-                        <option value="{{ $c->id }}" data-points="{{ $c->loyalty_points }}">{{ $c->name }} ({{ $c->phone }})</option>
-                        @endforeach
-                    </select>
+                    <div class="d-flex gap-1">
+                        <select id="cartCustomer" class="form-select form-select-sm" style="flex:1">
+                            <option value="">Walk-in Customer</option>
+                            @foreach($customers as $c)
+                            <option value="{{ $c->id }}" data-points="{{ $c->loyalty_points }}">{{ $c->name }} ({{ $c->phone }})</option>
+                            @endforeach
+                        </select>
+                        <button class="btn btn-sm btn-outline-primary" onclick="openReservationModal()" title="Load Reservation"><i class="bi bi-calendar2-check"></i></button>
+                    </div>
                 </div>
                 <div class="col-5">
-                    <select id="cartTable" class="form-select form-select-sm">
-                        <option value="">No Table</option>
+                    <select id="cartTable" class="form-select form-select-sm pos-table-select" multiple>
                         @foreach($tables as $t)
-                        <option value="{{ $t->id }}">{{ $t->table_number }}</option>
+                        <option value="{{ $t->id }}">{{ $t->table_number }} {{ $t->status !== 'available' ? '('.ucfirst($t->status).')' : '' }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -130,14 +134,18 @@
                 <div class="d-flex justify-content-between small mb-1"><span class="text-muted">Subtotal:</span><span id="cartSubtotal">৳0.00</span></div>
                 <div class="d-flex justify-content-between small mb-1"><span class="text-muted">Tax (5%):</span><span id="cartTax">৳0.00</span></div>
                 <div class="d-flex justify-content-between small mb-1 text-danger" id="discountRow" style="display:none!important"><span>Discount:</span><span id="cartDiscount">-৳0.00</span></div>
+                <div class="d-flex justify-content-between small mb-1 text-success" id="depositRow" style="display:none!important"><span>Res. Deposit:</span><span id="cartDeposit">-৳0.00</span></div>
                 <div class="d-flex justify-content-between fw-bold border-top pt-1 mt-1"><span>Total:</span><span id="cartTotal" style="color:var(--primary)">৳0.00</span></div>
             </div>
 
             <div class="d-flex gap-2 mb-2">
                 <button class="btn btn-outline-danger btn-sm flex-fill" onclick="clearCart()"><i class="bi bi-trash me-1"></i>Clear</button>
             </div>
+            <button class="btn btn-outline-warning w-100 mb-2 fw-bold text-dark" onclick="processPayLater()">
+                <i class="bi bi-send me-2"></i>Send to Kitchen (Hold)
+            </button>
             <button class="pay-btn w-100" onclick="openPayment()">
-                <i class="bi bi-cash-coin me-2"></i>Process Payment
+                <i class="bi bi-cash-coin me-2"></i>Pay & Checkout
             </button>
         </div>
     </div>
@@ -191,11 +199,56 @@
         <div class="modal-content border-0 shadow text-center">
             <div class="modal-body py-4">
                 <i class="bi bi-check-circle-fill text-success fs-1 d-block mb-2"></i>
-                <h5 class="fw-bold">Payment Successful!</h5>
+                <h5 class="fw-bold" id="receiptTitle">Payment Successful!</h5>
                 <div class="text-muted small mb-3" id="receiptInfo"></div>
                 <div class="d-flex gap-2 justify-content-center">
                     <button class="btn btn-outline-secondary btn-sm" onclick="printReceipt()"><i class="bi bi-printer me-1"></i>Print</button>
                     <button class="btn btn-primary btn-sm" onclick="newOrder()">New Order</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Delivery Address Modal -->
+<div class="modal fade" id="deliveryAddressModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold">Delivery Address Required</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="small text-muted mb-3">Since no customer is selected, please provide delivery details for this order.</p>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Mobile Number</label>
+                    <input type="text" id="deliveryPhoneInput" class="form-control" placeholder="Enter mobile number...">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Delivery Address</label>
+                    <textarea id="deliveryAddressInput" class="form-control" rows="2" placeholder="Enter full address..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="confirmDeliveryAddress()">Continue Order</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Reservation Modal -->
+<div class="modal fade" id="reservationModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold">Load Reservation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light"><tr><th>Res #</th><th>Time</th><th>Customer</th><th>Tables</th><th>Deposit</th><th>Action</th></tr></thead>
+                        <tbody id="reservationList"></tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -244,11 +297,22 @@
 </div>
 
 @push('scripts')
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
+$(document).ready(function() {
+    $('.pos-table-select').select2({
+        theme: 'bootstrap-5',
+        placeholder: "Select Table(s)",
+        allowClear: true
+    });
+});
 let cart = {};
 let couponData = null;
 let selectedMethod = 'cash';
 let lastOrderData = null;
+let activeReservationId = null;
+let activeReservationDeposit = 0;
 
 function addToCart(id, name, price) {
     if (cart[id]) cart[id].qty++;
@@ -264,7 +328,15 @@ function updateQty(id, delta) {
     renderCart();
 }
 
-function clearCart() { cart = {}; couponData = null; document.getElementById('couponCode').value=''; document.getElementById('couponInfo').classList.add('d-none'); renderCart(); }
+function clearCart() { 
+    cart = {}; couponData = null; 
+    activeReservationId = null; activeReservationDeposit = 0;
+    document.getElementById('couponCode').value=''; 
+    document.getElementById('couponInfo').classList.add('d-none'); 
+    $('#cartTable').val(null).trigger('change');
+    $('#cartCustomer').val('');
+    renderCart(); 
+}
 
 function getSubtotal() { return Object.values(cart).reduce((s, i) => s + i.price * i.qty, 0); }
 
@@ -294,12 +366,23 @@ function updateTotals() {
     const tax = sub * 0.05;
     let disc = 0;
     if (couponData) { disc = couponData.type === 'percentage' ? Math.min(sub * couponData.value / 100, couponData.max_discount || 9999) : couponData.value; }
-    const total = Math.max(0, sub + tax - disc);
+    
+    let total = Math.max(0, sub + tax - disc - activeReservationDeposit);
+    
     document.getElementById('cartSubtotal').textContent = '৳' + sub.toFixed(2);
     document.getElementById('cartTax').textContent = '৳' + tax.toFixed(2);
     document.getElementById('cartTotal').textContent = '৳' + total.toFixed(2);
+    
     if (disc > 0) { document.getElementById('cartDiscount').textContent = '-৳' + disc.toFixed(2); document.getElementById('discountRow').style.removeProperty('display'); }
     else document.getElementById('discountRow').style.setProperty('display','none','important');
+    
+    if (activeReservationDeposit > 0) {
+        document.getElementById('cartDeposit').textContent = '-৳' + activeReservationDeposit.toFixed(2);
+        document.getElementById('depositRow').style.removeProperty('display');
+    } else {
+        document.getElementById('depositRow').style.setProperty('display','none','important');
+    }
+    
     return total;
 }
 
@@ -321,7 +404,7 @@ function openPayment() {
     document.getElementById('payAmount').textContent = '৳' + total.toFixed(2);
     document.getElementById('receivedAmount').value = total.toFixed(2);
     calcChange();
-    new bootstrap.Modal(document.getElementById('paymentModal')).show();
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('paymentModal')).show();
 }
 
 function calcChange() {
@@ -331,25 +414,77 @@ function calcChange() {
 }
 
 function confirmPayment() {
+    processOrderRequest('paid', selectedMethod, parseFloat(document.getElementById('receivedAmount').value) || parseFloat(document.getElementById('cartTotal').textContent.replace('৳','')));
+}
+
+function processPayLater() {
+    if (!Object.keys(cart).length) { alert('Cart is empty!'); return; }
+    processOrderRequest('unpaid', 'cash', 0);
+}
+
+function processOrderRequest(paymentStatus, method, receivedAmount, providedAddress = null, providedPhone = null) {
+    const orderType = document.querySelector('input[name=orderType]:checked').value;
+    const selectedTables = Array.from(document.getElementById('cartTable').selectedOptions).map(opt => opt.value);
+    const customerId = document.getElementById('cartCustomer').value || null;
+    
+    if (orderType === 'dine_in' && selectedTables.length === 0) {
+        alert('Please select a table for Dine-In orders.');
+        return;
+    }
+
+    let deliveryAddress = providedAddress;
+    let deliveryPhone = providedPhone;
+    
+    if (orderType === 'delivery' && !customerId && (!deliveryAddress || !deliveryPhone)) {
+        window.pendingOrderArgs = { paymentStatus, method, receivedAmount };
+        document.getElementById('deliveryPhoneInput').value = '';
+        document.getElementById('deliveryAddressInput').value = '';
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('paymentModal')).hide();
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('deliveryAddressModal')).show();
+        return;
+    }
+
     const items = Object.values(cart).map(i => ({ menu_item_id: i.id, quantity: i.qty }));
     const total = parseFloat(document.getElementById('cartTotal').textContent.replace('৳',''));
-    const received = parseFloat(document.getElementById('receivedAmount').value) || total;
     const payload = {
-        items, payment_method: selectedMethod, payment_amount: received,
-        order_type: document.querySelector('input[name=orderType]:checked').value,
-        table_id: document.getElementById('cartTable').value || null,
-        customer_id: document.getElementById('cartCustomer').value || null,
+        items, 
+        payment_status: paymentStatus,
+        payment_method: method, 
+        payment_amount: receivedAmount,
+        order_type: orderType,
+        table_ids: selectedTables,
+        customer_id: customerId,
+        delivery_address: deliveryAddress,
+        delivery_phone: deliveryPhone,
         coupon_code: couponData ? document.getElementById('couponCode').value : null,
+        reservation_id: activeReservationId,
     };
     fetch('{{ route("pos.process") }}', { method:'POST', headers:{'Content-Type':'application/json','X-CSRF-TOKEN':'{{ csrf_token() }}'}, body:JSON.stringify(payload) })
         .then(r=>r.json()).then(d=>{
             if (d.success) {
-                bootstrap.Modal.getInstance(document.getElementById('paymentModal')).hide();
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('paymentModal')).hide();
                 lastOrderData = d;
-                document.getElementById('receiptInfo').innerHTML = `Order: <strong>${d.order_number}</strong><br>Total: ৳${d.total.toFixed(2)}<br>Change: ৳${d.change.toFixed(2)}`;
-                new bootstrap.Modal(document.getElementById('receiptModal')).show();
+                document.getElementById('receiptTitle').textContent = paymentStatus === 'paid' ? 'Payment Successful!' : 'Order Submitted!';
+                document.getElementById('receiptInfo').innerHTML = `Order: <strong>${d.order_number}</strong><br>Total: ৳${d.total.toFixed(2)}<br>Status: ${paymentStatus === 'paid' ? 'Paid' : 'Unpaid'}`;
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('receiptModal')).show();
             } else { alert('Error: ' + d.message); }
-        }).catch(e => alert('Error processing payment'));
+        }).catch(e => alert('Error processing order'));
+}
+
+function confirmDeliveryAddress() {
+    const phone = document.getElementById('deliveryPhoneInput').value.trim();
+    const addr = document.getElementById('deliveryAddressInput').value.trim();
+    if (!phone) {
+        alert('Mobile number is required.');
+        return;
+    }
+    if (!addr) {
+        alert('Delivery address is required.');
+        return;
+    }
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('deliveryAddressModal')).hide();
+    const args = window.pendingOrderArgs;
+    processOrderRequest(args.paymentStatus, args.method, args.receivedAmount, addr, phone);
 }
 
 function printReceipt() {
@@ -422,5 +557,45 @@ document.getElementById('posSearch').addEventListener('input', function() {
         el.style.display = match ? '' : 'none';
     });
 });
+
+// Reservations
+function openReservationModal() {
+    fetch('{{ route("pos.active-reservations") }}')
+        .then(r=>r.json())
+        .then(data => {
+            const tbody = document.getElementById('reservationList');
+            if (!data.length) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">No active reservations found for today.</td></tr>';
+            } else {
+                tbody.innerHTML = data.map(r => `
+                    <tr>
+                        <td class="fw-semibold">${r.reservation_number}</td>
+                        <td>${r.reservation_time.substring(0,5)}</td>
+                        <td>${r.customer_name}</td>
+                        <td>${r.tables.map(t=>t.table_number).join(', ')}</td>
+                        <td>৳${parseFloat(r.deposit_amount||0).toFixed(2)}</td>
+                        <td><button class="btn btn-sm btn-primary" onclick="loadReservation(${r.id}, ${r.customer_id}, '${r.deposit_amount}', [${r.tables.map(t=>t.id).join(',')}])">Load</button></td>
+                    </tr>
+                `).join('');
+            }
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('reservationModal')).show();
+        });
+}
+
+function loadReservation(id, customerId, deposit, tableIds) {
+    activeReservationId = id;
+    activeReservationDeposit = parseFloat(deposit || 0);
+    
+    if(customerId) {
+        document.getElementById('cartCustomer').value = customerId;
+    }
+    
+    if(tableIds && tableIds.length) {
+        $('#cartTable').val(tableIds).trigger('change');
+    }
+    
+    updateTotals();
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('reservationModal')).hide();
+}
 </script>
 @endpush

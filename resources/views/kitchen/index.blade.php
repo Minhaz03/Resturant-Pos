@@ -38,6 +38,7 @@
     <div class="d-flex gap-2">
         <span class="badge bg-danger px-3 py-2" id="pendingCount">{{ $kitchenOrders->count() }} Pending</span>
         <span class="badge bg-success px-3 py-2" id="readyCount">{{ $readyOrders->count() }} Ready</span>
+        <button class="btn btn-sm btn-outline-info" data-bs-toggle="offcanvas" data-bs-target="#historyOffcanvas"><i class="bi bi-clock-history"></i> History</button>
         <button class="btn btn-sm btn-outline-light" onclick="location.reload()"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
     </div>
 </div>
@@ -57,8 +58,16 @@
             @php $order = $items->first()->order @endphp
             <div class="kds-card {{ $items->first()->status }}" id="order-{{ $orderId }}">
                 <div class="kds-header">
-                    <span><i class="bi bi-receipt me-1"></i>{{ $order->order_number }}</span>
-                    <span>{{ $order->table?->table_number ?? 'Takeaway' }}</span>
+                    <div>
+                        <span><i class="bi bi-receipt me-1"></i>{{ $order->order_number }}</span>
+                        <span>
+                            @if($order->type === 'dine_in')
+                                Dine In {!! $order->tables->count() > 0 ? '<span class="badge bg-light text-dark ms-1">'.$order->tables->pluck('table_number')->implode(', ').'</span>' : '' !!}
+                            @else
+                                {{ ucfirst(str_replace('_', ' ', $order->type)) }}
+                            @endif
+                        </span>
+                    </div>
                 </div>
                 <div class="p-2 bg-white">
                     <div class="text-muted small mb-2 px-1">{{ $order->created_at->format('H:i') }} · {{ $order->created_at->diffForHumans() }}</div>
@@ -85,7 +94,6 @@
                                 @endif
                             </div>
                         </div>
-
                         {{-- Grocery / Ingredient Requirements --}}
                         @if($menuItem && $menuItem->ingredients->isNotEmpty())
                         <div class="kds-ingredients mt-2">
@@ -116,6 +124,15 @@
 
                     </div>
                     @endforeach
+                    @if($items->count() > 1)
+                        <div class="mt-2">
+                            @if($items->first()->status === 'pending')
+                                <button onclick="updateOrderKitchenStatus({{ $order->id }}, 'preparing')" class="btn btn-sm btn-warning w-100 fw-bold" title="Start All">Start All</button>
+                            @elseif($items->first()->status === 'preparing')
+                                <button onclick="updateOrderKitchenStatus({{ $order->id }}, 'ready')" class="btn btn-sm btn-success w-100 fw-bold" title="Ready All"><i class="bi bi-check-all"></i> Ready All</button>
+                            @endif
+                        </div>
+                    @endif
                 </div>
             </div>
             @endforeach
@@ -130,15 +147,26 @@
         @php $order = $items->first()->order @endphp
         <div class="kds-card ready mb-3">
             <div class="kds-header">
-                <span>{{ $order->order_number }}</span>
-                <span>{{ $order->table?->table_number ?? '—' }}</span>
+                <div>
+                    <span class="me-2">{{ $order->order_number }}</span>
+                    <span class="badge bg-light text-dark">
+                        @if($order->type === 'dine_in')
+                            Dine In {{ $order->tables->count() > 0 ? '('.$order->tables->pluck('table_number')->implode(', ').')' : '' }}
+                        @else
+                            {{ ucfirst(str_replace('_', ' ', $order->type)) }}
+                        @endif
+                    </span>
+                </div>
             </div>
             <div class="bg-white p-2">
                 @foreach($items as $ki)
                 <div class="kds-item" style="padding:6px 10px;">
                     <div class="kds-item-row">
                         <span style="font-size:0.85rem">{{ $ki->orderItem?->menuItem?->name }}</span>
-                        <span class="badge bg-success" style="font-size:0.7rem">Ready</span>
+                        <div>
+                            <span class="badge bg-success" style="font-size:0.7rem">Ready</span>
+                            <button onclick="updateKitchenStatus({{ $ki->id }},'served')" class="btn btn-sm btn-outline-success py-0 px-1" style="font-size:0.7rem" title="Mark as Served"><i class="bi bi-check-all"></i></button>
+                        </div>
                     </div>
                     @php $menuItem = $ki->orderItem?->menuItem; $qty = $ki->orderItem?->quantity ?? 1; @endphp
                     @if($menuItem && $menuItem->ingredients->isNotEmpty())
@@ -154,6 +182,11 @@
                     @endif
                 </div>
                 @endforeach
+                @if($items->count() > 1)
+                <div class="mt-2">
+                    <button onclick="serveOrder({{ $order->id }})" class="btn btn-sm btn-success w-100 fw-bold" title="Serve Entire Order"><i class="bi bi-check-all"></i> Serve All</button>
+                </div>
+                @endif
             </div>
         </div>
         @empty
@@ -161,11 +194,93 @@
         @endforelse
     </div>
 </div>
+
+<!-- Offcanvas for History -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="historyOffcanvas" aria-labelledby="historyOffcanvasLabel" style="background: #1a1a2e; color: #fff; width: 400px;">
+  <div class="offcanvas-header border-bottom border-secondary">
+    <h5 class="offcanvas-title" id="historyOffcanvasLabel"><i class="bi bi-clock-history me-2"></i>Today's History</h5>
+    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body">
+    <div class="row g-2 mb-4">
+        <div class="col-6">
+            <div class="p-3 rounded bg-dark border border-secondary text-center">
+                <h3 class="mb-0 text-success">{{ $readyOrders->count() }}</h3>
+                <small class="text-white-50">Orders Ready</small>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="p-3 rounded bg-dark border border-secondary text-center">
+                <h3 class="mb-0 text-info">{{ $servedOrders->count() }}</h3>
+                <small class="text-white-50">Orders Served</small>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="p-3 rounded bg-dark border border-secondary text-center">
+                <h3 class="mb-0 text-success">{{ $readyOrders->sum(fn($items) => $items->count()) }}</h3>
+                <small class="text-white-50">Items Ready</small>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="p-3 rounded bg-dark border border-secondary text-center">
+                <h3 class="mb-0 text-info">{{ $servedOrders->sum(fn($items) => $items->count()) }}</h3>
+                <small class="text-white-50">Items Served</small>
+            </div>
+        </div>
+    </div>
+    
+    <h6 class="text-white-50 text-uppercase mb-3" style="font-size:0.75rem;letter-spacing:1px">Recently Served</h6>
+    @forelse($servedOrders as $orderId => $items)
+        @php $order = $items->first()->order @endphp
+        <div class="kds-card mb-3 border border-secondary">
+            <div class="kds-header" style="background: #0f172a;">
+                <span>{{ $order->order_number }}</span>
+                <span class="badge bg-secondary text-white">
+                    @if($order->type === 'dine_in')
+                        Dine In {{ $order->tables->count() > 0 ? '('.$order->tables->pluck('table_number')->implode(', ').')' : '' }}
+                    @else
+                        {{ ucfirst(str_replace('_', ' ', $order->type)) }}
+                    @endif
+                </span>
+            </div>
+            <div class="bg-dark p-2 text-white">
+                @foreach($items as $ki)
+                <div class="kds-item border-secondary">
+                    <span style="font-size:0.85rem">{{ $ki->orderItem?->menuItem?->name }}</span>
+                    <span style="font-size:0.7rem" class="text-muted">{{ $ki->updated_at->format('H:i') }}</span>
+                </div>
+                @endforeach
+            </div>
+        </div>
+    @empty
+        <div class="text-center text-white-50 small py-3">No served orders today</div>
+    @endforelse
+  </div>
+</div>
 @endsection
 @push('scripts')
 <script>
 function updateKitchenStatus(id, status) {
     fetch(`/kitchen/${id}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        body: JSON.stringify({ status })
+    }).then(r => r.json()).then(d => {
+        if (d.success) setTimeout(() => location.reload(), 500);
+    });
+}
+
+function serveOrder(orderId) {
+    fetch(`/kitchen/order/${orderId}/serve`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+    }).then(r => r.json()).then(d => {
+        if (d.success) setTimeout(() => location.reload(), 500);
+    });
+}
+
+function updateOrderKitchenStatus(orderId, status) {
+    fetch(`/kitchen/order/${orderId}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
         body: JSON.stringify({ status })

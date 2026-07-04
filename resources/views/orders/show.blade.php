@@ -1,17 +1,7 @@
 @extends('layouts.app')
 @section('title','Order Details')
-@push('styles')
-<style>
-@media print {
-    #main, #sidebar, #topbar, .btn, .dropdown, .no-print { display: none !important; }
-    #printable-invoice { display: block !important; }
-    body { background: white !important; }
-}
-#printable-invoice { display: none; }
-</style>
-@endpush
 @section('content')
-<div class="d-flex align-items-center gap-3 mb-4">
+<div class="d-flex align-items-center gap-3 mb-4 no-print">
     <a href="{{ route('orders.index') }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></a>
     <div>
         <h4 class="fw-bold mb-0" style="color:var(--secondary)">{{ $order->order_number }}</h4>
@@ -20,6 +10,9 @@
         </span>
     </div>
     <div class="ms-auto d-flex gap-2">
+        @if(!$order->payment && !in_array($order->status, ['completed', 'cancelled']))
+        <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#settleModal"><i class="bi bi-cash-coin me-1"></i>Settle Payment</button>
+        @endif
         @if(!in_array($order->status,['completed','cancelled']))
         <div class="dropdown">
             <button class="btn btn-primary btn-sm dropdown-toggle" data-bs-toggle="dropdown">Update Status</button>
@@ -36,7 +29,7 @@
             </ul>
         </div>
         @endif
-        <button onclick="window.print()" class="btn btn-outline-secondary btn-sm"><i class="bi bi-printer me-1"></i>Print Invoice</button>
+        <a href="{{ route('orders.print', $order) }}" target="_blank" class="btn btn-outline-secondary btn-sm"><i class="bi bi-printer me-1"></i>Print Invoice</a>
     </div>
 </div>
 
@@ -81,6 +74,9 @@
                 <hr>
                 <div class="d-flex justify-content-between small"><span class="text-muted">Paid via:</span><span class="text-capitalize">{{ str_replace('_',' ',$order->payment->method) }}</span></div>
                 <div class="d-flex justify-content-between small"><span class="text-muted">Status:</span><span class="text-success">{{ ucfirst($order->payment->status) }}</span></div>
+                @else
+                <hr>
+                <div class="d-flex justify-content-between small"><span class="text-muted">Payment:</span><span class="text-danger fw-bold">UNPAID</span></div>
                 @endif
             </div>
         </div>
@@ -88,7 +84,7 @@
             <div class="card-header">Order Info</div>
             <div class="card-body small">
                 <div class="mb-2"><span class="text-muted">Type:</span> {{ str_replace('_',' ',ucfirst($order->type)) }}</div>
-                @if($order->table)<div class="mb-2"><span class="text-muted">Table:</span> {{ $order->table->table_number }}</div>@endif
+                @if($order->tables->count() > 0)<div class="mb-2"><span class="text-muted">Table(s):</span> {{ $order->tables->pluck('table_number')->implode(', ') }}</div>@endif
                 @if($order->customer)<div class="mb-2"><span class="text-muted">Customer:</span> {{ $order->customer->name }}</div>@endif
                 @if($order->waiter)<div class="mb-2"><span class="text-muted">Waiter:</span> {{ $order->waiter->name }}</div>@endif
                 <div class="mb-2"><span class="text-muted">Created:</span> {{ $order->created_at->format('d M Y, H:i') }}</div>
@@ -97,4 +93,56 @@
         </div>
     </div>
 </div>
+
+<!-- Settle Payment Modal -->
+@if(!$order->payment)
+<div class="modal fade" id="settleModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <form method="POST" action="{{ route('orders.settle', $order) }}" class="modal-content border-0 shadow">
+            @csrf
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold">Settle Payment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-4">
+                    <div class="text-muted small">Total Due</div>
+                    <div class="fw-bold" style="font-size:1.8rem;color:var(--primary)">৳{{ number_format($order->total_amount, 2) }}</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Payment Method</label>
+                    <select name="payment_method" class="form-select" required>
+                        <option value="cash">Cash</option>
+                        <option value="card">Card</option>
+                        <option value="mobile_banking">Mobile Banking</option>
+                        <option value="split">Split Payment</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Amount Received</label>
+                    <div class="input-group">
+                        <span class="input-group-text">৳</span>
+                        <input type="number" name="payment_amount" id="settleAmount" class="form-control" step="0.01" min="{{ $order->total_amount }}" value="{{ $order->total_amount }}" required oninput="calcSettleChange()">
+                    </div>
+                </div>
+                <div class="bg-light rounded p-2 text-center">
+                    <span class="text-muted small">Change: </span><span id="settleChange" class="fw-bold text-success">৳0.00</span>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-success"><i class="bi bi-check-circle me-1"></i>Confirm & Complete</button>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+function calcSettleChange() {
+    const total = {{ $order->total_amount }};
+    const received = parseFloat(document.getElementById('settleAmount').value) || 0;
+    const change = Math.max(0, received - total);
+    document.getElementById('settleChange').textContent = '৳' + change.toFixed(2);
+}
+</script>
+@endif
 @endsection

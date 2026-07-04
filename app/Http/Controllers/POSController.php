@@ -14,6 +14,7 @@ use App\Models\KitchenOrder;
 use App\Models\Invoice;
 use App\Models\DeliveryOrder;
 use App\Models\RestaurantSetting;
+use App\Models\Reservation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -22,7 +23,7 @@ class POSController extends Controller
     public function index()
     {
         $categories = Category::with('activeMenuItems')->where('status', true)->orderBy('sort_order')->get();
-        $tables = Table::available()->orderBy('table_number')->get();
+        $tables = Table::all()->sortBy('table_number');
         $customers = Customer::where('status', 'active')->orderBy('name')->get();
         $setting = RestaurantSetting::first();
         return view('pos.index', compact('categories', 'tables', 'customers', 'setting'));
@@ -32,12 +33,15 @@ class POSController extends Controller
     {
         $request->validate([
             'items' => 'required|array|min:1',
-            'payment_method' => 'required|in:cash,card,mobile_banking,split',
-            'payment_amount' => 'required|numeric|min:0',
+            'payment_status' => 'nullable|in:paid,unpaid',
+            'payment_method' => 'required_if:payment_status,paid|in:cash,card,mobile_banking,split',
+            'payment_amount' => 'required_if:payment_status,paid|numeric|min:0',
+            'reservation_id' => 'nullable|exists:reservations,id',
         ]);
 
         DB::beginTransaction();
         try {
+            $paymentStatus = $request->payment_status ?? 'paid';
             $setting = RestaurantSetting::first();
             $orderNumber = ($setting->order_prefix ?? 'ORD-') . date('Ymd') . '-' . str_pad(Order::whereDate('created_at', today())->count() + 1, 4, '0', STR_PAD_LEFT);
 
@@ -76,15 +80,68 @@ class POSController extends Controller
                 $loyaltyDiscount = $loyaltyPointsUsed * 0.5;
             }
 
-            $total = max(0, $subtotal + $taxAmount - $couponDiscount - $loyaltyDiscount);
+            $reservationDeposit = 0;
+            if ($request->reservation_id) {
+                $reservation = Reservation::find($request->reservation_id);
+                if ($reservation) {
+                    $reservationDeposit = $reservation->deposit_amount ?? 0;
+                    if ($reservation->status === 'pending' || $reservation->status === 'confirmed') {
+                        $reservation->update(['status' => 'seated']);
+                    }
+                }
+            }
+
+            $total = max(0, $subtotal + $taxAmount - $couponDiscount - $loyaltyDiscount - $reservationDeposit);
+
+            $activeOrder = null;
+            $tableIds = $request->table_ids ? (is_array($request->table_ids) ? $request->table_ids : [$request->table_ids]) : [];
+            if (!empty($tableIds) && ($request->order_type ?? 'dine_in') === 'dine_in') {
+                $activeOrder = Order::whereHas('tables', function ($q) use ($tableIds) {
+                    $q->whereIn('tables.id', $tableIds);
+                })->whereNotIn('status', ['completed', 'cancelled'])->first();
+            }
+
+            if ($activeOrder && $paymentStatus === 'paid') {
+                return response()->json(['success' => false, 'message' => 'This table has an open order. Please use "Send to Kitchen (Hold)" to add these items, then settle the full bill from the Orders page.']);
+            }
+
+            if ($activeOrder) {
+                $activeOrder->update([
+                    'subtotal' => $activeOrder->subtotal + $subtotal,
+                    'tax_amount' => $activeOrder->tax_amount + $taxAmount,
+                    'total_amount' => $activeOrder->total_amount + $total,
+                ]);
+
+                foreach ($items as $item) {
+                    $orderItem = $activeOrder->items()->create(array_merge($item, ['status' => 'pending']));
+                    KitchenOrder::create(['order_id' => $activeOrder->id, 'order_item_id' => $orderItem->id, 'status' => 'pending']);
+                }
+
+                if ($activeOrder->invoice) {
+                    $activeOrder->invoice->update([
+                        'subtotal' => $activeOrder->invoice->subtotal + $subtotal,
+                        'tax_amount' => $activeOrder->invoice->tax_amount + $taxAmount,
+                        'total_amount' => $activeOrder->invoice->total_amount + $total,
+                    ]);
+                }
+
+                DB::commit();
+
+                return response()->json([
+                    'success' => true,
+                    'order_id' => $activeOrder->id,
+                    'order_number' => $activeOrder->order_number,
+                    'total' => (float) $activeOrder->total_amount,
+                    'message' => 'Items added to existing order.'
+                ]);
+            }
 
             $order = Order::create([
                 'order_number' => $orderNumber,
-                'table_id' => $request->table_id,
                 'customer_id' => $request->customer_id,
                 'cashier_id' => auth()->id(),
                 'type' => $request->order_type ?? 'dine_in',
-                'status' => 'completed',
+                'status' => 'confirmed',
                 'subtotal' => $subtotal,
                 'tax_amount' => $taxAmount,
                 'discount_amount' => $request->discount ?? 0,
@@ -95,56 +152,82 @@ class POSController extends Controller
                 'loyalty_points_earned' => (int)($total / 100),
                 'notes' => $request->notes,
                 'created_by' => auth()->id(),
-                'completed_at' => now(),
             ]);
 
             foreach ($items as $item) {
-                $orderItem = $order->items()->create(array_merge($item, ['status' => 'served']));
-                KitchenOrder::create(['order_id' => $order->id, 'order_item_id' => $orderItem->id, 'status' => 'ready', 'completed_at' => now()]);
+                $orderItem = $order->items()->create(array_merge($item, ['status' => 'pending']));
+                KitchenOrder::create(['order_id' => $order->id, 'order_item_id' => $orderItem->id, 'status' => 'pending']);
             }
 
-            $paymentNumber = 'PAY-' . date('Ymd') . '-' . str_pad($order->id, 5, '0', STR_PAD_LEFT);
-            Payment::create([
-                'order_id' => $order->id,
-                'payment_number' => $paymentNumber,
-                'amount' => $total,
-                'method' => $request->payment_method,
-                'status' => 'completed',
-                'change_amount' => max(0, $request->payment_amount - $total),
-                'split_details' => $request->split_details,
-                'processed_by' => auth()->id(),
-                'paid_at' => now(),
-            ]);
+            if ($paymentStatus === 'paid') {
+                $paymentNumber = 'PAY-' . date('Ymd') . '-' . str_pad($order->id, 5, '0', STR_PAD_LEFT);
+                Payment::create([
+                    'order_id' => $order->id,
+                    'payment_number' => $paymentNumber,
+                    'amount' => $total,
+                    'method' => $request->payment_method,
+                    'status' => 'completed',
+                    'change_amount' => max(0, $request->payment_amount - $total),
+                    'split_details' => $request->split_details,
+                    'processed_by' => auth()->id(),
+                    'paid_at' => now(),
+                ]);
+            }
 
             $invoiceNumber = ($setting->invoice_prefix ?? 'INV-') . date('Ymd') . '-' . str_pad($order->id, 5, '0', STR_PAD_LEFT);
-            Invoice::create(['order_id' => $order->id, 'invoice_number' => $invoiceNumber, 'subtotal' => $subtotal, 'tax_amount' => $taxAmount, 'discount_amount' => $couponDiscount, 'total_amount' => $total, 'status' => 'paid', 'issued_at' => now(), 'paid_at' => now(), 'created_by' => auth()->id()]);
+            Invoice::create(['order_id' => $order->id, 'invoice_number' => $invoiceNumber, 'subtotal' => $subtotal, 'tax_amount' => $taxAmount, 'discount_amount' => $couponDiscount, 'total_amount' => $total, 'status' => $paymentStatus === 'paid' ? 'paid' : 'issued', 'issued_at' => now(), 'paid_at' => $paymentStatus === 'paid' ? now() : null, 'created_by' => auth()->id()]);
 
-            if ($request->table_id) Table::find($request->table_id)?->update(['status' => 'available']);
+            if (!empty($tableIds)) {
+                $order->tables()->sync($tableIds);
+                if (($request->order_type ?? 'dine_in') !== 'dine_in') {
+                    Table::whereIn('id', $tableIds)->update(['status' => 'available']);
+                } else {
+                    Table::whereIn('id', $tableIds)->update(['status' => 'occupied']);
+                }
+            }
 
             // Auto-create DeliveryOrder if order type is delivery
             if (($request->order_type ?? 'dine_in') === 'delivery') {
+                $address = $request->delivery_address;
+                $phone = $request->delivery_phone;
+                
+                if (empty($address) && $request->customer_id) {
+                    $customer = Customer::find($request->customer_id);
+                    $address = $customer?->address;
+                    if (empty($phone)) $phone = $customer?->phone;
+                }
+
                 DeliveryOrder::create([
                     'order_id'         => $order->id,
                     'status'           => 'pending',
-                    'delivery_address' => $request->delivery_address,
+                    'tracking_code'    => 'TRK-' . strtoupper(str()->random(8)),
+                    'delivery_address' => $address ?: 'Address not provided',
+                    'delivery_phone'   => $phone ?: 'Phone not provided',
                     'delivery_notes'   => $request->delivery_notes,
                 ]);
             }
 
             if ($request->customer_id) {
                 $customer = Customer::find($request->customer_id);
-                $customer?->increment('total_orders');
-                $customer?->increment('total_spent', $total);
-                if ($loyaltyPointsUsed > 0) $customer?->redeemLoyaltyPoints($loyaltyPointsUsed, $order->id);
-                $pointsEarned = (int)($total / 100);
-                if ($pointsEarned > 0) $customer?->addLoyaltyPoints($pointsEarned, $order->id, 'Earned from order #' . $orderNumber);
+                if ($customer && $loyaltyPointsUsed > 0) {
+                    $customer->decrement('loyalty_points', $loyaltyPointsUsed);
+                }
+                if ($customer && $total > 0) {
+                    $customer->increment('loyalty_points', (int)($total / 100));
+                }
             }
 
             DB::commit();
-            return response()->json(['success' => true, 'order_id' => $order->id, 'order_number' => $orderNumber, 'total' => $total, 'change' => max(0, $request->payment_amount - $total)]);
-        } catch (\Exception $e) {
+            return response()->json([
+                'success' => true,
+                'order_id' => $order->id,
+                'order_number' => $orderNumber,
+                'total' => $total,
+                'change' => max(0, ($request->payment_amount ?? 0) - $total)
+            ]);
+        } catch (\Throwable $e) {
             DB::rollBack();
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+            return response()->json(['success' => false, 'message' => $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine()], 500);
         }
     }
 
@@ -168,5 +251,15 @@ class POSController extends Controller
             return response()->json(['valid' => false, 'message' => 'Invalid or expired coupon']);
         }
         return response()->json(['valid' => true, 'type' => $coupon->type, 'value' => $coupon->value, 'name' => $coupon->name]);
+    }
+
+    public function getActiveReservations()
+    {
+        $reservations = Reservation::with(['customer', 'tables'])
+            ->whereDate('reservation_date', today())
+            ->whereIn('status', ['pending', 'confirmed'])
+            ->orderBy('reservation_time')
+            ->get();
+        return response()->json($reservations);
     }
 }

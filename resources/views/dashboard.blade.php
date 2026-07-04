@@ -89,7 +89,7 @@
                 <div class="d-flex align-items-center px-3 py-2 border-bottom justify-content-between" style="font-size:0.855rem">
                     <div>
                         <a href="{{ route('orders.show',$order) }}" class="fw-semibold text-decoration-none" style="color:var(--secondary)">{{ $order->order_number }}</a>
-                        <span class="text-muted ms-2">{{ $order->table?->table_number ?? 'Takeaway' }}</span>
+                        <span class="text-muted ms-2">{{ $order->tables->count() > 0 ? $order->tables->pluck('table_number')->implode(', ') : 'Takeaway' }}</span>
                     </div>
                     <div class="d-flex align-items-center gap-3">
                         <span class="text-muted small">{{ $order->items->count() }} items</span>
