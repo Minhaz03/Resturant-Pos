@@ -10,7 +10,7 @@ class TableApiController extends Controller
 {
     public function index()
     {
-        $tables = Table::with('activeOrder')->orderBy('table_number')->get();
+        $tables = Table::with('activeOrders')->orderBy('table_number')->get();
         return response()->json(['data' => $tables]);
     }
 

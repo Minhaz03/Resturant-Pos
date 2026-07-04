@@ -9,7 +9,7 @@ class TableController extends Controller
 {
     public function index()
     {
-        $tables = Table::with('activeOrder.customer')->orderBy('table_number')->get();
+        $tables = Table::with('activeOrders.customer')->orderBy('table_number')->get();
         $stats = [
             'total' => $tables->count(),
             'available' => $tables->where('status', 'available')->count(),

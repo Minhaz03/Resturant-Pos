@@ -10,17 +10,22 @@ class Table extends Model
 
     public function orders()
     {
-        return $this->hasMany(Order::class);
+        return $this->belongsToMany(Order::class);
     }
 
-    public function activeOrder()
+    public function activeOrders()
     {
-        return $this->hasOne(Order::class)->whereIn('status', ['pending', 'confirmed', 'preparing', 'ready', 'served']);
+        return $this->belongsToMany(Order::class)->whereIn('status', ['pending', 'confirmed', 'preparing', 'ready', 'served']);
+    }
+
+    public function getActiveOrderAttribute()
+    {
+        return $this->activeOrders->first();
     }
 
     public function reservations()
     {
-        return $this->hasMany(Reservation::class);
+        return $this->belongsToMany(Reservation::class);
     }
 
     public function isAvailable()
