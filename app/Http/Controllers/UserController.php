@@ -34,6 +34,7 @@ class UserController extends Controller
             'password' => 'required|min:8|confirmed',
             'role' => 'required|exists:roles,name',
             'status' => 'required|in:active,inactive',
+            'avatar' => 'nullable|image|max:2048',
         ]);
 
         $user = User::create([
@@ -41,6 +42,10 @@ class UserController extends Controller
             'phone' => $data['phone'], 'password' => Hash::make($data['password']),
             'status' => $data['status'],
         ]);
+        if ($request->hasFile('avatar')) {
+            $path = $request->file('avatar')->store('avatars', 'public');
+            $user->update(['avatar' => $path]);
+        }
         $user->assignRole($data['role']);
         return redirect()->route('users.index')->with('success', 'User created.');
     }
@@ -60,10 +65,18 @@ class UserController extends Controller
             'password' => 'nullable|min:8|confirmed',
             'role' => 'required|exists:roles,name',
             'status' => 'required|in:active,inactive',
+            'avatar' => 'nullable|image|max:2048',
         ]);
 
         $updateData = ['name' => $data['name'], 'email' => $data['email'], 'phone' => $data['phone'], 'status' => $data['status']];
-        if ($data['password']) $updateData['password'] = Hash::make($data['password']);
+        if (!empty($data['password'])) $updateData['password'] = Hash::make($data['password']);
+        if ($request->hasFile('avatar')) {
+            if ($user->avatar) \Illuminate\Support\Facades\Storage::disk('public')->delete($user->avatar);
+            $updateData['avatar'] = $request->file('avatar')->store('avatars', 'public');
+        } elseif ($request->input('remove_avatar') == '1') {
+            if ($user->avatar) \Illuminate\Support\Facades\Storage::disk('public')->delete($user->avatar);
+            $updateData['avatar'] = null;
+        }
         $user->update($updateData);
         $user->syncRoles([$data['role']]);
         return redirect()->route('users.index')->with('success', 'User updated.');

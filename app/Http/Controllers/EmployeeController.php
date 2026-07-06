@@ -92,10 +92,16 @@ class EmployeeController extends Controller
         if ($request->hasFile('avatar')) {
             if ($employee->avatar) Storage::disk('public')->delete($employee->avatar);
             $data['avatar'] = $request->file('avatar')->store('employees', 'public');
+        } elseif ($request->input('remove_avatar') == '1') {
+            if ($employee->avatar) Storage::disk('public')->delete($employee->avatar);
+            $data['avatar'] = null;
         }
         if ($request->hasFile('nid_photo')) {
             if ($employee->nid_photo) Storage::disk('public')->delete($employee->nid_photo);
             $data['nid_photo'] = $request->file('nid_photo')->store('employees/nid', 'public');
+        } elseif ($request->input('remove_nid_photo') == '1') {
+            if ($employee->nid_photo) Storage::disk('public')->delete($employee->nid_photo);
+            $data['nid_photo'] = null;
         }
 
         $employee->update($data);

@@ -27,7 +27,11 @@
                 <td class="text-muted small">{{ $emp->employee_id }}</td>
                 <td>
                     <div class="d-flex align-items-center gap-2">
+                        @if($emp->avatar)
+                        <img src="{{ asset('storage/'.$emp->avatar) }}" class="rounded-circle" width="35" height="35" style="object-fit:cover">
+                        @else
                         <div class="rounded-circle d-flex align-items-center justify-content-center" style="width:35px;height:35px;background:var(--secondary);color:#fff;font-weight:600;font-size:0.85rem">{{ strtoupper(substr($emp->name,0,1)) }}</div>
+                        @endif
                         <div><div class="fw-semibold">{{ $emp->name }}</div><div class="text-muted small">{{ $emp->email ?? $emp->department ?? '' }}</div></div>
                     </div>
                 </td>

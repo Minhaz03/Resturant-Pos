@@ -125,6 +125,7 @@
         imagePreviewHeight: 180,
         server: null,
         instantUpload: false,
+        storeAsFile: true,
         onremovefile: function() {
             document.getElementById('removeImageFlag').value = '1';
         },

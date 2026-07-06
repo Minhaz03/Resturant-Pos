@@ -1,5 +1,21 @@
 @extends('layouts.app')
 @section('title','Edit User')
+
+@push('styles')
+<link href="https://unpkg.com/filepond/dist/filepond.css" rel="stylesheet">
+<link href="https://unpkg.com/filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css" rel="stylesheet">
+<style>
+    .filepond--root { font-family: 'Inter', sans-serif; }
+    .filepond--panel-root { background: #f8fafc; border: 2px dashed #e2e8f0; border-radius: 10px; }
+    .filepond--drop-label { color: #64748b; font-size: 0.875rem; }
+    .filepond--label-action { color: var(--primary, #8B0000); font-weight: 600; text-decoration: underline; }
+    .filepond--item-panel { background: var(--secondary, #0A2647); }
+    .filepond--file-action-button { background: rgba(139,0,0,0.85); }
+    [data-filepond-item-state='processing-complete'] .filepond--item-panel { background: #1a7f5a; }
+    [data-filepond-item-state='error'] .filepond--item-panel,
+    [data-filepond-item-state='aborted'] .filepond--item-panel { background: #dc2626; }
+</style>
+@endpush
 @section('content')
 <div class="d-flex align-items-center gap-3 mb-4">
     <a href="{{ route('users.index') }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></a>
@@ -7,6 +23,7 @@
 </div>
 <div class="row justify-content-center"><div class="col-lg-6"><div class="card"><div class="card-body">
     <form method="POST" action="{{ route('users.update',$user) }}" enctype="multipart/form-data">@csrf @method('PUT')
+        <input type="hidden" name="remove_avatar" id="removeAvatarFlag" value="0">
         <div class="row g-3">
             <div class="col-md-6"><label class="form-label fw-semibold">Full Name</label><input type="text" name="name" class="form-control" value="{{ old('name',$user->name) }}" required></div>
             <div class="col-md-6"><label class="form-label fw-semibold">Email</label><input type="email" name="email" class="form-control" value="{{ old('email',$user->email) }}" required></div>
@@ -25,8 +42,10 @@
                 </select></div>
             <div class="col-md-6">
                 <label class="form-label fw-semibold">Avatar</label>
-                @if($user->avatar)<img src="{{ asset('storage/'.$user->avatar) }}" class="d-block mb-1 rounded-circle" width="40" height="40" style="object-fit:cover">@endif
-                <input type="file" name="avatar" class="form-control" accept="image/*">
+                <input type="file" id="userAvatar" name="avatar" accept="image/*">
+                <div class="text-muted" style="font-size:0.78rem;margin-top:4px">
+                    <i class="bi bi-info-circle me-1"></i>Upload to replace current avatar. Max 2MB.
+                </div>
             </div>
         </div>
         <hr>
@@ -37,3 +56,60 @@
     </form>
 </div></div></div></div>
 @endsection
+
+@push('scripts')
+<script src="https://unpkg.com/filepond-plugin-image-preview/dist/filepond-plugin-image-preview.js"></script>
+<script src="https://unpkg.com/filepond-plugin-file-validate-size/dist/filepond-plugin-file-validate-size.js"></script>
+<script src="https://unpkg.com/filepond-plugin-file-validate-type/dist/filepond-plugin-file-validate-type.js"></script>
+<script src="https://unpkg.com/filepond/dist/filepond.js"></script>
+<script>
+    FilePond.registerPlugin(
+        FilePondPluginImagePreview,
+        FilePondPluginFileValidateSize,
+        FilePondPluginFileValidateType
+    );
+
+    @php
+        $avatarUrl = $user->avatar ? asset('storage/' . $user->avatar) : null;
+    @endphp
+
+    const pondConfig = {
+        allowMultiple: false,
+        maxFileSize: '2MB',
+        acceptedFileTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
+        imagePreviewHeight: 140,
+        server: null,
+        instantUpload: false,
+        storeAsFile: true,
+        labelIdle: '<i class="bi bi-person-circle" style="font-size:1.5rem;color:var(--primary)"></i><br><span style="font-weight:600;color:#374151">Upload Avatar</span><br><span style="color:#6b7280;font-size:0.82rem">or <span class="filepond--label-action">Browse</span></span>',
+        onremovefile: function() {
+            document.getElementById('removeAvatarFlag').value = '1';
+        },
+        onaddfile: function() {
+            document.getElementById('removeAvatarFlag').value = '0';
+        },
+    };
+
+    @if($avatarUrl)
+    pondConfig.files = [{
+        source: '{{ $avatarUrl }}',
+        options: {
+            type: 'local',
+            file: { name: 'current-avatar.jpg', size: 0, type: 'image/jpeg' },
+            metadata: { poster: '{{ $avatarUrl }}' },
+        },
+    }];
+    pondConfig.server = {
+        load: (source, load, error, progress, abort, headers) => {
+            fetch(source)
+                .then(res => res.blob())
+                .then(blob => load(blob))
+                .catch(e => error(e));
+            return { abort: () => abort() };
+        },
+    };
+    @endif
+
+    FilePond.create(document.querySelector('#userAvatar'), pondConfig);
+</script>
+@endpush

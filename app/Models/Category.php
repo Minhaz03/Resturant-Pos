@@ -52,7 +52,11 @@ class Category extends Model implements HasMedia
     {
         // First check Spatie Media Library
         if ($this->hasMedia('image')) {
-            return $this->getFirstMediaUrl('image');
+            $url = $this->getFirstMediaUrl('image');
+            if (app()->environment('local') || request()->getHost() === '127.0.0.1' || request()->getHost() === 'localhost') {
+                return str_replace('https://your-app.up.railway.app', request()->getSchemeAndHttpHost(), $url);
+            }
+            return $url;
         }
         // Fallback to legacy image column
         if ($this->image) {

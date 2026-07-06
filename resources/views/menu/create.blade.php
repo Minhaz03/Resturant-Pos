@@ -141,6 +141,7 @@
         imagePreviewHeight: 180,
         server: null,
         instantUpload: false,
+        storeAsFile: true,
     });
 </script>
 @endpush

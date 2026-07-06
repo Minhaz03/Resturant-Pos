@@ -91,6 +91,7 @@
         styleButtonProcessItemPosition: 'right bottom',
         server: null,
         instantUpload: false,
+        storeAsFile: true,
     });
 </script>
 @endpush
