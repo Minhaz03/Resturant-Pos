@@ -12,7 +12,7 @@ class KitchenController extends Controller
     public function index()
     {
         $kitchenOrders = KitchenOrder::with([
-                'order.table',
+                'order.tables',
                 'orderItem.menuItem.ingredients.inventoryItem',
             ])
             ->whereIn('status', ['pending', 'preparing'])
@@ -22,7 +22,7 @@ class KitchenController extends Controller
             ->groupBy('order_id');
 
         $readyOrders = KitchenOrder::with([
-                'order.table',
+                'order.tables',
                 'orderItem.menuItem.ingredients.inventoryItem',
             ])
             ->where('status', 'ready')
@@ -31,7 +31,7 @@ class KitchenController extends Controller
             ->take(20)->get()
             ->groupBy('order_id');
 
-        $servedOrders = KitchenOrder::with(['order.table', 'orderItem.menuItem'])
+        $servedOrders = KitchenOrder::with(['order.tables', 'orderItem.menuItem'])
             ->where('status', 'served')
             ->whereDate('created_at', today())
             ->latest('updated_at')
@@ -122,7 +122,7 @@ class KitchenController extends Controller
 
     public function getNewOrders()
     {
-        $orders = KitchenOrder::with(['order.table', 'orderItem.menuItem'])
+        $orders = KitchenOrder::with(['order.tables', 'orderItem.menuItem'])
             ->whereIn('status', ['pending', 'preparing'])
             ->orderBy('created_at')
             ->get()->groupBy('order_id');
