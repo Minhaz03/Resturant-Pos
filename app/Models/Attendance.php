@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Attendance extends Model
 {
+    use \App\Traits\BelongsToTenant;
     protected $fillable = [
         'employee_id', 'date', 'check_in', 'check_out',
         'working_hours', 'status', 'notes',
@@ -31,3 +32,4 @@ class Attendance extends Model
         return $this->belongsTo(Employee::class);
     }
 }
+

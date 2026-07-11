@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class LoyaltyTransaction extends Model
 {
+    use \App\Traits\BelongsToTenant;
     protected $fillable = [
         'customer_id', 'order_id', 'type', 'points', 'balance_after', 'description',
     ];
@@ -20,3 +21,4 @@ class LoyaltyTransaction extends Model
         return $this->belongsTo(Order::class);
     }
 }
+

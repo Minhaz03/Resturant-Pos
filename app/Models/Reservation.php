@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Reservation extends Model
 {
+    use \App\Traits\BelongsToTenant;
     protected $fillable = [
         'reservation_number', 'customer_id', 'customer_name',
         'customer_phone', 'customer_email', 'reservation_date', 'reservation_time',
@@ -39,3 +40,4 @@ class Reservation extends Model
             ->whereIn('status', ['pending', 'confirmed']);
     }
 }
+

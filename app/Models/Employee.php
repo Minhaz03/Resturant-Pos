@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Employee extends Model
 {
+    use \App\Traits\BelongsToTenant;
     use SoftDeletes;
 
     protected $fillable = [
@@ -53,3 +54,4 @@ class Employee extends Model
         return $this->attendances()->whereDate('date', today())->first();
     }
 }
+

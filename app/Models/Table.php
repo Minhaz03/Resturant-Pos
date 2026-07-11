@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Table extends Model
 {
+    use \App\Traits\BelongsToTenant;
     protected $fillable = ['table_number', 'name', 'capacity', 'location', 'status', 'qr_code'];
 
     public function orders()
@@ -38,3 +39,4 @@ class Table extends Model
         return $query->where('status', 'available');
     }
 }
+

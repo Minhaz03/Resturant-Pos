@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Supplier extends Model
 {
+    use \App\Traits\BelongsToTenant;
     use SoftDeletes;
 
     protected $fillable = [
@@ -28,3 +29,4 @@ class Supplier extends Model
         return $this->hasMany(PurchaseOrder::class);
     }
 }
+

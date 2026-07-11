@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class OrderItem extends Model
 {
+    use \App\Traits\BelongsToTenant;
     protected $fillable = [
         'order_id', 'menu_item_id', 'item_name', 'unit_price', 'quantity',
         'tax_rate', 'tax_amount', 'discount', 'subtotal', 'notes', 'status',
@@ -34,3 +35,4 @@ class OrderItem extends Model
         return $this->hasOne(KitchenOrder::class);
     }
 }
+

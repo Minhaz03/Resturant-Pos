@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class InventoryItem extends Model
 {
+    use \App\Traits\BelongsToTenant;
     use SoftDeletes;
 
     protected $fillable = [
@@ -49,3 +50,4 @@ class InventoryItem extends Model
         return $query->whereColumn('quantity', '<=', 'min_quantity');
     }
 }
+

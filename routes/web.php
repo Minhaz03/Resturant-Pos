@@ -23,10 +23,12 @@ use App\Http\Controllers\NotificationController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return redirect()->route('dashboard');
+    return view('central.landing');
 });
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::post('/register-tenant', [\App\Http\Controllers\Central\TenantRegistrationController::class, 'store'])->name('tenant.register');
+
+Route::middleware(['tenant', 'auth', 'verified'])->group(function () {
 
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');

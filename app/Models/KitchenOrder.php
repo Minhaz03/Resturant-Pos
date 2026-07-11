@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class KitchenOrder extends Model
 {
+    use \App\Traits\BelongsToTenant;
     protected $fillable = [
         'order_id', 'order_item_id', 'station', 'status', 'priority',
         'estimated_time', 'started_at', 'completed_at', 'notes',
@@ -37,3 +38,4 @@ class KitchenOrder extends Model
         return $query->whereIn('status', ['pending', 'preparing'])->orderBy('priority', 'desc')->orderBy('created_at');
     }
 }
+

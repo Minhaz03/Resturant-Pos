@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Coupon extends Model
 {
+    use \App\Traits\BelongsToTenant;
     protected $fillable = [
         'code', 'name', 'type', 'value', 'min_order_amount', 'max_discount',
         'usage_limit', 'used_count', 'per_user_limit', 'start_date',
@@ -45,3 +46,4 @@ class Coupon extends Model
         return round(min($discount, $orderAmount), 2);
     }
 }
+

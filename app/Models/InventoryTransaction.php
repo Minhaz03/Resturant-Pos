@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class InventoryTransaction extends Model
 {
+    use \App\Traits\BelongsToTenant;
     protected $fillable = [
         'inventory_item_id', 'type', 'quantity', 'unit_cost',
         'total_cost', 'balance_after', 'reference', 'notes', 'created_by',
@@ -28,3 +29,4 @@ class InventoryTransaction extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 }
+

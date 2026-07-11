@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Invoice extends Model
 {
+    use \App\Traits\BelongsToTenant;
     protected $fillable = [
         'order_id', 'invoice_number', 'subtotal', 'tax_amount',
         'discount_amount', 'total_amount', 'status', 'due_date',
@@ -32,3 +33,4 @@ class Invoice extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 }
+

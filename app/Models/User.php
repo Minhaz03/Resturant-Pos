@@ -11,6 +11,7 @@ use Spatie\Activitylog\Traits\CausesActivity;
 
 class User extends Authenticatable
 {
+    use \App\Traits\BelongsToTenant;
     use HasFactory, Notifiable, HasRoles, CausesActivity;
 
     protected $fillable = [
@@ -58,3 +59,4 @@ class User extends Authenticatable
         return $this->status === 'active';
     }
 }
+

@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class PurchaseOrderItem extends Model
 {
+    use \App\Traits\BelongsToTenant;
     protected $fillable = [
         'purchase_order_id', 'inventory_item_id', 'quantity',
         'received_quantity', 'unit_cost', 'total_cost', 'unit',
@@ -28,3 +29,4 @@ class PurchaseOrderItem extends Model
         return $this->belongsTo(InventoryItem::class);
     }
 }
+

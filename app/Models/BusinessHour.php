@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class BusinessHour extends Model
 {
+    use \App\Traits\BelongsToTenant;
     protected $fillable = ['day_of_week', 'day_name', 'is_open', 'open_time', 'close_time'];
 
     protected $casts = ['is_open' => 'boolean'];
@@ -19,3 +20,4 @@ class BusinessHour extends Model
         return $currentTime >= $hour->open_time && $currentTime <= $hour->close_time;
     }
 }
+

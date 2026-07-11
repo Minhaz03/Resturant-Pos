@@ -12,6 +12,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class MenuItem extends Model implements HasMedia
 {
+    use \App\Traits\BelongsToTenant;
     use SoftDeletes, LogsActivity, InteractsWithMedia;
 
     protected $fillable = [
@@ -95,3 +96,4 @@ class MenuItem extends Model implements HasMedia
         return $query->where('status', true)->where('is_available', true);
     }
 }
+

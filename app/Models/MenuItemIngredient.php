@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class MenuItemIngredient extends Model
 {
+    use \App\Traits\BelongsToTenant;
     protected $fillable = [
         'menu_item_id',
         'inventory_item_id',
@@ -26,3 +27,4 @@ class MenuItemIngredient extends Model
         return $this->belongsTo(InventoryItem::class);
     }
 }
+

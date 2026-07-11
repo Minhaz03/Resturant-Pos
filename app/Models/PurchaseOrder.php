@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class PurchaseOrder extends Model
 {
+    use \App\Traits\BelongsToTenant;
     protected $fillable = [
         'po_number', 'supplier_id', 'order_date', 'expected_date',
         'received_date', 'subtotal', 'tax_amount', 'discount',
@@ -37,3 +38,4 @@ class PurchaseOrder extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 }
+

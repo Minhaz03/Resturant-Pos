@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Customer extends Model
 {
+    use \App\Traits\BelongsToTenant;
     use SoftDeletes;
 
     protected $fillable = [
@@ -67,3 +68,4 @@ class Customer extends Model
         return true;
     }
 }
+

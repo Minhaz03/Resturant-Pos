@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class DeliveryOrder extends Model
 {
+    use \App\Traits\BelongsToTenant;
     protected $fillable = [
         'order_id', 'rider_id', 'delivery_address', 'delivery_phone',
         'delivery_charge', 'distance_km', 'status', 'notes',
@@ -43,3 +44,4 @@ class DeliveryOrder extends Model
         };
     }
 }
+

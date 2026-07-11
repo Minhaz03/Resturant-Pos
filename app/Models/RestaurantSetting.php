@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class RestaurantSetting extends Model
 {
+    use \App\Traits\BelongsToTenant;
     protected $fillable = [
         'name', 'slug', 'logo', 'tagline', 'address', 'phone', 'email', 'website',
         'currency', 'currency_symbol', 'tax_rate', 'tax_name', 'timezone',
@@ -31,3 +32,4 @@ class RestaurantSetting extends Model
         return $this->logo ? asset('storage/' . $this->logo) : asset('images/logo.png');
     }
 }
+

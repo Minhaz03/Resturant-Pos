@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Payment extends Model
 {
+    use \App\Traits\BelongsToTenant;
     protected $fillable = [
         'order_id', 'payment_number', 'amount', 'method', 'status',
         'transaction_id', 'reference', 'change_amount', 'split_details',
@@ -29,3 +30,4 @@ class Payment extends Model
         return $this->belongsTo(User::class, 'processed_by');
     }
 }
+

@@ -12,6 +12,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class Category extends Model implements HasMedia
 {
+    use \App\Traits\BelongsToTenant;
     use SoftDeletes, LogsActivity, InteractsWithMedia;
 
     protected $fillable = ['name', 'slug', 'description', 'image', 'sort_order', 'status'];
@@ -65,3 +66,4 @@ class Category extends Model implements HasMedia
         return asset('images/default-category.png');
     }
 }
+
