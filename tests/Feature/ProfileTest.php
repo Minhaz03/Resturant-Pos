@@ -10,9 +10,20 @@ class ProfileTest extends TestCase
 {
     use RefreshDatabase;
 
+    private $tenant;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->tenant = \App\Models\Tenant::create([
+            'name' => 'Test Restaurant',
+            'is_active' => true,
+        ]);
+    }
+
     public function test_profile_page_is_displayed(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(['tenant_id' => $this->tenant->id]);
 
         $response = $this
             ->actingAs($user)
@@ -23,7 +34,7 @@ class ProfileTest extends TestCase
 
     public function test_profile_information_can_be_updated(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(['tenant_id' => $this->tenant->id]);
 
         $response = $this
             ->actingAs($user)
@@ -45,7 +56,7 @@ class ProfileTest extends TestCase
 
     public function test_email_verification_status_is_unchanged_when_the_email_address_is_unchanged(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(['tenant_id' => $this->tenant->id]);
 
         $response = $this
             ->actingAs($user)
@@ -63,7 +74,7 @@ class ProfileTest extends TestCase
 
     public function test_user_can_delete_their_account(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(['tenant_id' => $this->tenant->id]);
 
         $response = $this
             ->actingAs($user)
@@ -81,7 +92,7 @@ class ProfileTest extends TestCase
 
     public function test_correct_password_must_be_provided_to_delete_account(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(['tenant_id' => $this->tenant->id]);
 
         $response = $this
             ->actingAs($user)

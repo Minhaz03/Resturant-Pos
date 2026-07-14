@@ -15,13 +15,32 @@ class IdentifyTenant
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (auth()->check() && auth()->user()->tenant_id) {
-            $tenant = \App\Models\Tenant::find(auth()->user()->tenant_id);
+        if (auth()->check()) {
+            $user = auth()->user();
             
-            if ($tenant && $tenant->is_active) {
-                app()->instance('tenant', $tenant);
-                \Illuminate\Support\Facades\Session::put('tenant_id', $tenant->id);
+            // Allow super admins to bypass tenant verification check
+            if ($user->hasRole('super_admin')) {
+                return $next($request);
             }
+            
+            if (!$user->tenant_id) {
+                auth()->logout();
+                return redirect()->route('login')->withErrors([
+                    'email' => 'Your account is not associated with any restaurant tenant.'
+                ]);
+            }
+            
+            $tenant = \App\Models\Tenant::find($user->tenant_id);
+            
+            if (!$tenant || !$tenant->is_active) {
+                auth()->logout();
+                return redirect()->route('login')->withErrors([
+                    'email' => 'Your restaurant tenant account is inactive. Please contact support.'
+                ]);
+            }
+            
+            app()->instance('tenant', $tenant);
+            \Illuminate\Support\Facades\Session::put('tenant_id', $tenant->id);
         }
 
         return $next($request);
