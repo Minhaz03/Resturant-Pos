@@ -36,9 +36,77 @@
     </form>
 </div></div>
 
+<style>
+/* ── Actions Dropdown ─────────────────────────────── */
+.orders-action-menu {
+    min-width: 195px;
+    padding: 5px;
+    border-radius: 12px !important;
+    border: 1px solid rgba(0,0,0,.07) !important;
+    box-shadow: 0 10px 35px rgba(0,0,0,.12) !important;
+}
+.orders-action-menu .dropdown-item {
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 0.83rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    color: #374151;
+    transition: background .14s, color .14s;
+    white-space: nowrap;
+}
+.orders-action-menu .dropdown-item:hover { background: #f3f4f6; color: #111827; }
+.orders-action-menu .dropdown-item.text-danger:hover { background: #fef2f2; }
+.orders-action-menu .dropdown-item.text-success:hover { background: #f0fdf4; }
+.orders-action-menu .dropdown-item.text-secondary:hover { background: #f9fafb; }
+
+/* coloured icon chips */
+.orders-action-menu .action-icon {
+    width: 24px; height: 24px;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.78rem;
+    flex-shrink: 0;
+}
+.icon-view       { background: #eff6ff; color: #3b82f6; }
+.icon-confirmed  { background: #dbeafe; color: #1d4ed8; }
+.icon-preparing  { background: #ede9fe; color: #7c3aed; }
+.icon-ready      { background: #d1fae5; color: #059669; }
+.icon-served     { background: #cffafe; color: #0e7490; }
+.icon-completed  { background: #dcfce7; color: #16a34a; }
+.icon-cancelled  { background: #fee2e2; color: #dc2626; }
+.icon-payment    { background: #fef9c3; color: #ca8a04; }
+.icon-print      { background: #f3f4f6; color: #6b7280; }
+
+.orders-action-menu .dropdown-divider { margin: 4px 0; }
+
+/* trigger button */
+.btn-dots {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb !important;
+    background: #fff !important;
+    color: #6b7280 !important;
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 0;
+    transition: background .15s, border-color .15s, box-shadow .15s, color .15s;
+    font-size: 0.9rem;
+}
+.btn-dots:hover, .btn-dots.show {
+    background: #f3f4f6 !important;
+    border-color: #d1d5db !important;
+    color: #111827 !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,.09) !important;
+}
+/* hide Bootstrap caret from dropdown-toggle */
+.btn-dots::after { display: none !important; }
+</style>
+
 <div class="card"><div class="card-body p-0"><div class="table-responsive">
-    <table class="table mb-0">
-        <thead><tr><th>Order #</th><th>Table/Type</th><th>Customer</th><th>Items</th><th>Total</th><th>Payment</th><th>Status</th><th>Time</th><th>Actions</th></tr></thead>
+    <table class="table mb-0 align-middle">
+        <thead><tr><th>Order #</th><th>Table/Type</th><th>Customer</th><th>Items</th><th>Total</th><th>Payment</th><th>Status</th><th>Time</th><th class="text-end">Actions</th></tr></thead>
         <tbody>
             @forelse($orders as $order)
             <tr>
@@ -63,44 +131,47 @@
                     </span>
                 </td>
                 <td class="text-muted small">{{ $order->created_at->diffForHumans() }}</td>
-                <td>
-                    <div class="d-flex gap-1">
-                        <a href="{{ route('orders.show',$order) }}" class="btn btn-sm btn-outline-primary py-0 px-2"><i class="bi bi-eye"></i></a>
-                        <div class="dropdown">
-                            <button class="btn btn-sm btn-outline-secondary py-0 px-2 dropdown-toggle" data-bs-toggle="dropdown"><i class="bi bi-three-dots"></i></button>
-                            <ul class="dropdown-menu border-0 shadow">
-                                @if(!in_array($order->status,['completed','cancelled']))
-                                @foreach(['confirmed','preparing','ready','served','completed','cancelled'] as $s)
-                                @if($s != $order->status)
-                                <li>
-                                    <form method="POST" action="{{ route('orders.update-status',$order) }}">
-                                        @csrf @method('PATCH')
-                                        <input type="hidden" name="status" value="{{ $s }}">
-                                        <button type="submit" class="dropdown-item small {{ $s=='cancelled'?'text-danger':'' }}">
-                                            <i class="bi {{ match($s){'confirmed'=>'bi-check','preparing'=>'bi-fire','ready'=>'bi-bell','served'=>'bi-person-check','completed'=>'bi-check-circle','cancelled'=>'bi-x-circle',default=>'bi-arrow-right'} }} me-2"></i>
-                                            {{ ucfirst($s) }}
-                                        </button>
-                                    </form>
-                                </li>
-                                @endif
-                                @endforeach
-                                @endif
-                                @if(!$order->payment)
-                                <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <button class="dropdown-item small text-success fw-bold" data-bs-toggle="modal" data-bs-target="#settleModal-{{ $order->id }}">
-                                        <i class="bi bi-cash-coin me-2"></i>Settle Payment
+                <td class="text-end">
+                    <div class="dropdown">
+                        <button class="btn btn-dots dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="More actions">
+                            <i class="bi bi-three-dots-vertical"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end orders-action-menu">
+                            <li><a class="dropdown-item" href="{{ route('orders.show',$order) }}"><span class="action-icon icon-view"><i class="bi bi-eye"></i></span>View Details</a></li>
+                            @if(!in_array($order->status,['completed','cancelled']))
+                            <li><hr class="dropdown-divider"></li>
+                            @foreach(['confirmed','preparing','ready','served','completed','cancelled'] as $s)
+                            @if($s != $order->status)
+                            <li>
+                                <form method="POST" action="{{ route('orders.update-status',$order) }}">
+                                    @csrf @method('PATCH')
+                                    <input type="hidden" name="status" value="{{ $s }}">
+                                    <button type="submit" class="dropdown-item {{ $s=='cancelled'?'text-danger':'' }}">
+                                        <span class="action-icon icon-{{ $s }}">
+                                            <i class="bi {{ match($s){'confirmed'=>'bi-check-circle','preparing'=>'bi-fire','ready'=>'bi-bell','served'=>'bi-person-check','completed'=>'bi-check2-all','cancelled'=>'bi-x-circle',default=>'bi-arrow-right'} }}"></i>
+                                        </span>
+                                        Mark as {{ ucfirst($s) }}
                                     </button>
-                                </li>
-                                @endif
-                                <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <a href="{{ route('orders.print', $order) }}" target="_blank" class="dropdown-item small text-secondary">
-                                        <i class="bi bi-printer me-2"></i>Print Invoice
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
+                                </form>
+                            </li>
+                            @endif
+                            @endforeach
+                            @endif
+                            @if(!$order->payment)
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <button class="dropdown-item text-success fw-semibold" data-bs-toggle="modal" data-bs-target="#settleModal-{{ $order->id }}">
+                                    <span class="action-icon icon-payment"><i class="bi bi-cash-coin"></i></span>Settle Payment
+                                </button>
+                            </li>
+                            @endif
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a href="{{ route('orders.print', $order) }}" target="_blank" class="dropdown-item text-secondary">
+                                    <span class="action-icon icon-print"><i class="bi bi-printer"></i></span>Print Invoice
+                                </a>
+                            </li>
+                        </ul>
                     </div>
                 </td>
             </tr>
