@@ -447,27 +447,24 @@
 
     <!-- Footer -->
     <footer class="bg-slate-900 text-slate-400 py-12 border-t border-slate-800">
-        <div
-            class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6">
-            <div class="gap-2">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-6">
                 <div class="flex items-center gap-2">
                     <div class="w-8 h-8 bg-brand-gold rounded-lg flex items-center justify-center text-white">
                         <i class="bi bi-cup-hot-fill"></i>
                     </div>
                     <span class="font-outfit font-bold text-white">Grand RMS</span>
                 </div>
-                <div class="flex items-center gap-1.5">
-                    <span class="text-[10px] uppercase tracking-widest text-brand-gold font-bold">Built by</span>
-                    <img class="h-6 w-40 object-contain brightness-0 invert opacity-60 hover:opacity-100 transition-opacity duration-300"
-                        src="{{ asset('solutionclime.webp') }}" alt="Solution Clime">
+                <div class="flex gap-4 text-xs font-semibold">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[10px] uppercase tracking-widest text-brand-gold font-bold">Built by</span>
+                        <img class="h-6 w-40 object-contain brightness-0 invert opacity-60 hover:opacity-100 transition-opacity duration-300"
+                            src="{{ asset('solutionclime.webp') }}" alt="Solution Clime">
+                    </div>
                 </div>
             </div>
-
-            <div class="text-sm">&copy; 2026 Grand RMS. All rights reserved. Built with passion for dining services.
-            </div>
-            <div class="flex gap-4 text-xs font-semibold">
-                <a href="{{ route('login') }}" class="hover:text-white transition-colors">Admin Login</a>
-                <a href="#register" class="hover:text-white transition-colors">Create Workspace</a>
+            <div class="text-sm text-center text-slate-500 mt-2 pt-2 border-t border-slate-800/40">
+                &copy; 2026 Grand RMS. All rights reserved. Built with passion for dining services.
             </div>
         </div>
     </footer>
