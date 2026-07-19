@@ -86,7 +86,16 @@
                                 </div>
                             </div>
                             <div class="d-flex flex-column align-items-end gap-1">
-                                <span class="elapsed {{ $elapsed < 10 ? 'ok' : ($elapsed < 20 ? 'warn' : 'late') }}">{{ $elapsed }}min</span>
+                                @php
+                                    if ($elapsed >= 60) {
+                                        $hrs  = intdiv($elapsed, 60);
+                                        $mins = $elapsed % 60;
+                                        $elapsedLabel = $mins > 0 ? "{$hrs} hr {$mins} min" : "{$hrs} hr";
+                                    } else {
+                                        $elapsedLabel = "{$elapsed} min";
+                                    }
+                                @endphp
+                                <span class="elapsed {{ $elapsed < 10 ? 'ok' : ($elapsed < 20 ? 'warn' : 'late') }}">{{ $elapsedLabel }}</span>
                                 @if($ki->status === 'pending')
                                 <button onclick="updateKitchenStatus({{ $ki->id }},'preparing')" class="btn btn-sm btn-warning py-0 px-2" style="font-size:0.75rem">Start</button>
                                 @elseif($ki->status === 'preparing')
