@@ -21,8 +21,19 @@
             <div class="col-md-3"><label class="form-label">Date</label><input type="date" name="reservation_date" class="form-control" value="{{ old('reservation_date',$reservation->reservation_date->format('Y-m-d')) }}" required></div>
             <div class="col-md-3"><label class="form-label">Time</label><input type="time" name="reservation_time" class="form-control" value="{{ old('reservation_time',substr($reservation->reservation_time,0,5)) }}" required></div>
             <div class="col-md-2"><label class="form-label">Guests</label><input type="number" name="guest_count" class="form-control" value="{{ old('guest_count',$reservation->guest_count) }}" min="1" required></div>
-            <div class="col-md-2"><label class="form-label">Deposit</label><input type="number" name="deposit_amount" class="form-control" value="{{ old('deposit_amount',$reservation->deposit_amount ?? 0) }}" min="0" step="0.01"></div>
-            <div class="col-md-2"><label class="form-label">Status</label>
+            <div class="col-md-5">
+                <label class="form-label">Deposit (৳)</label>
+                <div class="input-group">
+                    <input type="number" name="deposit_amount" class="form-control" value="{{ old('deposit_amount',$reservation->deposit_amount ?? 0) }}" min="0" step="0.01">
+                    <select name="deposit_payment_method" class="form-select">
+                        <option value="">Method...</option>
+                        <option value="cash" {{ old('deposit_payment_method', $reservation->deposit_payment_method) == 'cash' ? 'selected' : '' }}>Cash</option>
+                        <option value="card" {{ old('deposit_payment_method', $reservation->deposit_payment_method) == 'card' ? 'selected' : '' }}>Card</option>
+                        <option value="mobile_banking" {{ old('deposit_payment_method', $reservation->deposit_payment_method) == 'mobile_banking' ? 'selected' : '' }}>Mobile Banking</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-3"><label class="form-label">Status</label>
                 <select name="status" class="form-select">
                 @foreach(['pending','confirmed','seated','completed','cancelled','no_show'] as $s)
                 <option value="{{ $s }}" {{ old('status',$reservation->status)==$s?'selected':'' }}>{{ ucfirst(str_replace('_',' ',$s)) }}</option>

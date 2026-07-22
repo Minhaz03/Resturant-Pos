@@ -136,8 +136,31 @@
         }
 
         .cart-footer {
-            padding: 10px;
+            padding: 15px;
             border-top: 1px solid #f1f5f9;
+            background: #f8fafc;
+        }
+
+        .form-select {
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+            padding: 8px 12px;
+            font-size: 0.9rem;
+            color: #334155;
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            appearance: none;
+            background-color: #fff;
+        }
+        
+        .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(139, 0, 0, 0.15);
+        }
+
+        .form-select-sm {
+            padding: 6px 10px;
+            font-size: 0.85rem;
         }
 
         .pay-btn {
@@ -556,7 +579,7 @@
                     <i class="bi bi-send me-2"></i>Send to Kitchen (Hold)
                 </button>
                 <button class="pay-btn w-100" onclick="openPayment()">
-                    <i class="bi bi-cash-coin me-2"></i>Pay & Checkout
+                    <i class="bi bi-printer me-2"></i>Pay & Print Receipt
                 </button>
             </div>
         </div>
@@ -566,8 +589,8 @@
     <div class="modal fade" id="paymentModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content payment-modal border-0 shadow">
-                <div class="modal-header border-0">
-                    <h5 class="modal-title fw-bold">Process Payment</h5>
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold">Pay to Proceed</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
@@ -590,14 +613,34 @@
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Amount Received</label>
                         <div class="input-group">
-                            <span class="input-group-text">৳</span>
-                            <input type="number" id="receivedAmount" class="form-control" step="0.01"
-                                placeholder="0.00" oninput="calcChange()">
+                            <span class="input-group-text bg-white border-end-0">৳</span>
+                            <input type="number" id="receivedAmount" class="form-control border-start-0 ps-0" step="0.01"
+                                placeholder="0.00" oninput="calcChange()" style="font-size: 1.2rem; font-weight: bold; color: var(--primary);">
                         </div>
                     </div>
-                    <div class="bg-light rounded p-2" id="changeInfo">
-                        <div class="d-flex justify-content-between small"><span>Change:</span><span id="changeAmount"
-                                class="fw-bold text-success">৳0.00</span></div>
+                    
+                    <div class="bg-light rounded p-2 mb-3" id="changeInfo">
+                        <div class="d-flex justify-content-between small align-items-center"><span>Change:</span><span id="changeAmount"
+                                class="fw-bold text-success fs-5">৳0.00</span></div>
+                    </div>
+
+                    <hr class="text-muted">
+
+                    <div class="row g-2 mb-2">
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-semibold small text-muted mb-1">Customer Name <span class="text-danger">*</span></label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-white"><i class="bi bi-person"></i></span>
+                                <input type="text" id="walkinName" class="form-control" placeholder="e.g. John Doe" required>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-semibold small text-muted mb-1">Customer Phone <span class="text-danger">*</span></label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-white"><i class="bi bi-telephone"></i></span>
+                                <input type="text" id="walkinPhone" class="form-control" placeholder="e.g. 01712345678" required>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer border-0">
@@ -701,6 +744,12 @@
     </div>
     <div style="display:flex;justify-content:space-between;margin-bottom:4px">
         <small>Cashier:</small><small>{{ auth()->user()->name }}</small>
+    </div>
+    <div id="rp-customer-name-row" style="display:none;justify-content:space-between;margin-bottom:4px">
+        <small>Customer:</small><small id="rp-customer-name">—</small>
+    </div>
+    <div id="rp-customer-phone-row" style="display:none;justify-content:space-between;margin-bottom:4px">
+        <small>Phone:</small><small id="rp-customer-phone">—</small>
     </div>
     <hr style="border-top:1px dashed #000;margin:6px 0">
     <table style="width:100%;border-collapse:collapse">
@@ -989,6 +1038,20 @@
         }
 
         function confirmPayment() {
+            const wName = document.getElementById('walkinName').value.trim();
+            const wPhone = document.getElementById('walkinPhone').value.trim();
+            
+            if (!wName) {
+                alert('Customer Name is required to proceed with payment.');
+                document.getElementById('walkinName').focus();
+                return;
+            }
+            if (!wPhone) {
+                alert('Customer Phone is required to proceed with payment.');
+                document.getElementById('walkinPhone').focus();
+                return;
+            }
+
             processOrderRequest('paid', selectedMethod, parseFloat(document.getElementById('receivedAmount').value) ||
                 parseFloat(document.getElementById('cartTotal').textContent.replace('৳', '')));
         }
@@ -1096,9 +1159,24 @@
             }
             const total = Math.max(0, sub + tax - disc);
             const change = lastOrderData.change ?? 0;
-            // Populate receipt
             document.getElementById('rp-order-no').textContent = lastOrderData.order_number;
-            document.getElementById('rp-date').textContent = new Date().toLocaleString();
+            document.getElementById('rp-date').textContent = new Date().toLocaleString('en-US', { timeZone: 'Asia/Dhaka' });
+            
+            const wName = document.getElementById('walkinName').value;
+            const wPhone = document.getElementById('walkinPhone').value;
+            if(wName) {
+                document.getElementById('rp-customer-name').textContent = wName;
+                document.getElementById('rp-customer-name-row').style.display = 'flex';
+            } else {
+                document.getElementById('rp-customer-name-row').style.display = 'none';
+            }
+            if(wPhone) {
+                document.getElementById('rp-customer-phone').textContent = wPhone;
+                document.getElementById('rp-customer-phone-row').style.display = 'flex';
+            } else {
+                document.getElementById('rp-customer-phone-row').style.display = 'none';
+            }
+
             document.getElementById('rp-subtotal').textContent = '৳' + sub.toFixed(2);
             document.getElementById('rp-tax').textContent = '৳' + tax.toFixed(2);
             document.getElementById('rp-total').textContent = '৳' + total.toFixed(2);
@@ -1123,6 +1201,10 @@
             lastOrderData = null;
             document.getElementById('couponCode').value = '';
             document.getElementById('couponInfo').classList.add('d-none');
+            document.getElementById('walkinName').value = '';
+            document.getElementById('walkinPhone').value = '';
+            document.getElementById('rp-customer-name-row').style.display = 'none';
+            document.getElementById('rp-customer-phone-row').style.display = 'none';
         }
 
         // Sort

@@ -130,7 +130,10 @@
                         {{ ucfirst($order->status) }}
                     </span>
                 </td>
-                <td class="text-muted small">{{ $order->created_at->diffForHumans() }}</td>
+                <td class="text-muted small">
+                    <div class="text-dark fw-medium">{{ $order->created_at->format('d M Y') }}</div>
+                    <div style="font-size: 0.75rem;">{{ $order->created_at->format('h:i A') }}</div>
+                </td>
                 <td class="text-end">
                     <div class="dropdown">
                         <button class="btn btn-dots dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="More actions">

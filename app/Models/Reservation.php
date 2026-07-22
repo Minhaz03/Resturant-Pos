@@ -11,6 +11,7 @@ class Reservation extends Model
         'reservation_number', 'customer_id', 'customer_name',
         'customer_phone', 'customer_email', 'reservation_date', 'reservation_time',
         'guest_count', 'status', 'notes', 'confirmed_at', 'created_by', 'deposit_amount',
+        'deposit_payment_method'
     ];
 
     protected $casts = [
