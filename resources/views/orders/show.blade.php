@@ -10,7 +10,7 @@
         </span>
     </div>
     <div class="ms-auto d-flex gap-2">
-        @if(!$order->payment && !in_array($order->status, ['completed', 'cancelled']))
+        @if(!$order->payment && $order->status !== 'cancelled')
         <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#settleModal"><i class="bi bi-cash-coin me-1"></i>Settle Payment</button>
         @endif
         @if(!in_array($order->status,['completed','cancelled']))
@@ -95,48 +95,84 @@
 </div>
 
 <!-- Settle Payment Modal -->
-@if(!$order->payment)
+@if(!$order->payment && $order->status !== 'cancelled')
+<style>
+/* Payment Modal Styles */
+.payment-modal .method-btn {
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 12px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+}
+.payment-modal .method-btn.selected {
+    border-color: var(--primary);
+    background: #fef2f2;
+}
+.payment-modal .method-btn:hover {
+    border-color: var(--primary);
+}
+</style>
 <div class="modal fade" id="settleModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
-        <form method="POST" action="{{ route('orders.settle', $order) }}" class="modal-content border-0 shadow">
+        <form method="POST" action="{{ route('orders.settle', $order) }}" class="modal-content payment-modal border-0 shadow">
             @csrf
-            <div class="modal-header border-0">
-                <h5 class="modal-title fw-bold">Settle Payment</h5>
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">Pay to Proceed</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <div class="text-center mb-4">
-                    <div class="text-muted small">Total Due</div>
-                    <div class="fw-bold" style="font-size:1.8rem;color:var(--primary)">৳{{ number_format($order->total_amount, 2) }}</div>
+                <div class="text-center mb-3">
+                    <div class="fw-bold" style="font-size:1.5rem;color:var(--primary)">৳{{ number_format($order->total_amount, 2) }}</div>
+                    <div class="text-muted small">Total Amount Due</div>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label fw-semibold">Payment Method</label>
-                    <select name="payment_method" class="form-select" required>
-                        <option value="cash">Cash</option>
-                        <option value="card">Card</option>
-                        <option value="mobile_banking">Mobile Banking</option>
-                        <option value="split">Split Payment</option>
-                    </select>
+
+                <input type="hidden" name="payment_method" id="payment_method" value="cash">
+
+                <div class="row g-2 mb-3">
+                    @foreach (['cash' => 'Cash', 'card' => 'Card', 'mobile_banking' => 'Mobile Banking'] as $val => $label)
+                        <div class="col-4">
+                            <div class="method-btn {{ $val == 'cash' ? 'selected' : '' }}"
+                                onclick="selectMethodOrder('{{ $val }}')" data-method="{{ $val }}">
+                                <i class="bi {{ $val == 'cash' ? 'bi-cash-coin' : ($val == 'card' ? 'bi-credit-card' : 'bi-phone') }} fs-4 d-block mb-1"
+                                    style="color:var(--primary)"></i>
+                                <div style="font-size:0.8rem;font-weight:600">{{ $label }}</div>
+                            </div>
+                        </div>
+                    @endforeach
                 </div>
+
                 <div class="mb-3">
                     <label class="form-label fw-semibold">Amount Received</label>
                     <div class="input-group">
-                        <span class="input-group-text">৳</span>
-                        <input type="number" name="payment_amount" id="settleAmount" class="form-control" step="0.01" min="{{ $order->total_amount }}" value="{{ $order->total_amount }}" required oninput="calcSettleChange()">
+                        <span class="input-group-text bg-white border-end-0">৳</span>
+                        <input type="number" name="payment_amount" id="settleAmount" class="form-control border-start-0 ps-0" step="0.01" min="{{ $order->total_amount }}" value="{{ $order->total_amount }}" required oninput="calcSettleChange()" style="font-size: 1.2rem; font-weight: bold; color: var(--primary);">
                     </div>
                 </div>
-                <div class="bg-light rounded p-2 text-center">
-                    <span class="text-muted small">Change: </span><span id="settleChange" class="fw-bold text-success">৳0.00</span>
+                <div class="bg-light rounded p-2 mb-3">
+                    <div class="d-flex justify-content-between small align-items-center"><span>Change:</span><span id="settleChange"
+                            class="fw-bold text-success fs-5">৳0.00</span></div>
                 </div>
             </div>
             <div class="modal-footer border-0">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="submit" class="btn btn-success"><i class="bi bi-check-circle me-1"></i>Confirm & Complete</button>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-check2-circle me-1"></i>Confirm Payment</button>
             </div>
         </form>
     </div>
 </div>
 <script>
+function selectMethodOrder(method) {
+    document.getElementById('payment_method').value = method;
+    document.querySelectorAll('.method-btn').forEach(btn => {
+        btn.classList.remove('selected');
+        if (btn.getAttribute('data-method') === method) {
+            btn.classList.add('selected');
+        }
+    });
+}
+
 function calcSettleChange() {
     const total = {{ $order->total_amount }};
     const received = parseFloat(document.getElementById('settleAmount').value) || 0;

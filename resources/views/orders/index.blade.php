@@ -102,6 +102,23 @@
 }
 /* hide Bootstrap caret from dropdown-toggle */
 .btn-dots::after { display: none !important; }
+
+/* Payment Modal Styles */
+.payment-modal .method-btn {
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 12px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+}
+.payment-modal .method-btn.selected {
+    border-color: var(--primary);
+    background: #fef2f2;
+}
+.payment-modal .method-btn:hover {
+    border-color: var(--primary);
+}
 </style>
 
 <div class="card"><div class="card-body p-0"><div class="table-responsive">
@@ -160,7 +177,7 @@
                             @endif
                             @endforeach
                             @endif
-                            @if(!$order->payment)
+                            @if(!$order->payment && $order->status !== 'cancelled')
                             <li><hr class="dropdown-divider"></li>
                             <li>
                                 <button class="dropdown-item text-success fw-semibold" data-bs-toggle="modal" data-bs-target="#settleModal-{{ $order->id }}">
@@ -188,43 +205,51 @@
 </div>
 
 @foreach($orders as $order)
-@if(!$order->payment && !in_array($order->status, ['completed', 'cancelled']))
+@if(!$order->payment && $order->status !== 'cancelled')
 <div class="modal fade" id="settleModal-{{ $order->id }}" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
-        <form method="POST" action="{{ route('orders.settle', $order) }}" class="modal-content border-0 shadow">
+        <form method="POST" action="{{ route('orders.settle', $order) }}" class="modal-content payment-modal border-0 shadow">
             @csrf
-            <div class="modal-header border-0">
-                <h5 class="modal-title fw-bold">Settle Payment</h5>
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">Pay to Proceed</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <div class="text-center mb-4">
-                    <div class="text-muted small">Total Due</div>
-                    <div class="fw-bold" style="font-size:1.8rem;color:var(--primary)">৳{{ number_format($order->total_amount, 2) }}</div>
+                <div class="text-center mb-3">
+                    <div class="fw-bold" style="font-size:1.5rem;color:var(--primary)">৳{{ number_format($order->total_amount, 2) }}</div>
+                    <div class="text-muted small">Total Amount Due</div>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label fw-semibold">Payment Method</label>
-                    <select name="payment_method" class="form-select" required>
-                        <option value="cash">Cash</option>
-                        <option value="card">Card</option>
-                        <option value="mobile_banking">Mobile Banking</option>
-                        <option value="split">Split Payment</option>
-                    </select>
+
+                <input type="hidden" name="payment_method" id="payment_method_{{ $order->id }}" value="cash">
+
+                <div class="row g-2 mb-3">
+                    @foreach (['cash' => 'Cash', 'card' => 'Card', 'mobile_banking' => 'Mobile Banking'] as $val => $label)
+                        <div class="col-4">
+                            <div class="method-btn method-btn-{{ $order->id }} {{ $val == 'cash' ? 'selected' : '' }}"
+                                onclick="selectMethodOrder({{ $order->id }}, '{{ $val }}')" data-method="{{ $val }}">
+                                <i class="bi {{ $val == 'cash' ? 'bi-cash-coin' : ($val == 'card' ? 'bi-credit-card' : 'bi-phone') }} fs-4 d-block mb-1"
+                                    style="color:var(--primary)"></i>
+                                <div style="font-size:0.8rem;font-weight:600">{{ $label }}</div>
+                            </div>
+                        </div>
+                    @endforeach
                 </div>
+
                 <div class="mb-3">
                     <label class="form-label fw-semibold">Amount Received</label>
                     <div class="input-group">
-                        <span class="input-group-text">৳</span>
-                        <input type="number" name="payment_amount" class="form-control" step="0.01" min="{{ $order->total_amount }}" value="{{ $order->total_amount }}" required oninput="calcSettleChange(this, {{ $order->total_amount }})">
+                        <span class="input-group-text bg-white border-end-0">৳</span>
+                        <input type="number" name="payment_amount" id="receivedAmount_{{ $order->id }}" class="form-control border-start-0 ps-0" step="0.01" min="{{ $order->total_amount }}" value="{{ $order->total_amount }}" required oninput="calcSettleChange({{ $order->id }}, {{ $order->total_amount }})" style="font-size: 1.2rem; font-weight: bold; color: var(--primary);">
                     </div>
                 </div>
-                <div class="bg-light rounded p-2 text-center">
-                    <span class="text-muted small">Change: </span><span class="fw-bold text-success settle-change">৳0.00</span>
+                <div class="bg-light rounded p-2 mb-3">
+                    <div class="d-flex justify-content-between small align-items-center"><span>Change:</span><span id="changeAmount_{{ $order->id }}"
+                            class="fw-bold text-success fs-5">৳0.00</span></div>
                 </div>
             </div>
             <div class="modal-footer border-0">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="submit" class="btn btn-success"><i class="bi bi-check-circle me-1"></i>Confirm & Complete</button>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-check2-circle me-1"></i>Confirm Payment</button>
             </div>
         </form>
     </div>
@@ -233,10 +258,32 @@
 @endforeach
 
 <script>
-function calcSettleChange(input, total) {
-    const received = parseFloat(input.value) || 0;
-    const change = Math.max(0, received - total);
-    input.closest('.modal-body').querySelector('.settle-change').textContent = '৳' + change.toFixed(2);
+function selectMethodOrder(orderId, method) {
+    document.getElementById('payment_method_' + orderId).value = method;
+    document.querySelectorAll('.method-btn-' + orderId).forEach(btn => {
+        btn.classList.remove('selected');
+        if (btn.getAttribute('data-method') === method) {
+            btn.classList.add('selected');
+        }
+    });
 }
+
+function calcSettleChange(orderId, total) {
+    const received = parseFloat(document.getElementById('receivedAmount_' + orderId).value) || 0;
+    const change = Math.max(0, received - total);
+    document.getElementById('changeAmount_' + orderId).textContent = '৳' + change.toFixed(2);
+}
+
+// Auto-refresh the orders table every 30 seconds to fetch the latest data
+function startAutoRefresh() {
+    setTimeout(() => {
+        if (!document.querySelector('.modal.show') && !document.querySelector('.dropdown-menu.show') && !document.querySelector('input:focus, select:focus')) {
+            window.location.reload();
+        } else {
+            startAutoRefresh();
+        }
+    }, 30000);
+}
+startAutoRefresh();
 </script>
 @endsection

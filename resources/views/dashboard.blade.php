@@ -196,5 +196,17 @@ if(sd.length) {
         options: { cutout:'68%', plugins:{legend:{position:'bottom',labels:{font:{size:10},padding:6}}} }
     });
 }
+
+// Auto-refresh the dashboard every 30 seconds to fetch the latest sales data
+function startAutoRefresh() {
+    setTimeout(() => {
+        if (!document.querySelector('.modal.show') && !document.querySelector('input:focus, select:focus')) {
+            window.location.reload();
+        } else {
+            startAutoRefresh();
+        }
+    }, 30000);
+}
+startAutoRefresh();
 </script>
 @endpush
