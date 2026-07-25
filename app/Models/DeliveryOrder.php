@@ -9,7 +9,7 @@ class DeliveryOrder extends Model
     use \App\Traits\BelongsToTenant;
     protected $fillable = [
         'order_id', 'rider_id', 'delivery_address', 'delivery_phone',
-        'delivery_charge', 'distance_km', 'status', 'notes',
+        'delivery_name', 'delivery_charge', 'distance_km', 'status', 'notes',
         'tracking_code', 'assigned_at', 'picked_up_at', 'delivered_at',
     ];
 

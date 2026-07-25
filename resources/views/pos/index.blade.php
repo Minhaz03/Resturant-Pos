@@ -12,6 +12,7 @@
         .pos-menu {
             flex: 1;
             overflow-y: auto;
+            overflow-x: hidden;
         }
 
         .pos-cart {
@@ -27,10 +28,12 @@
             flex-wrap: nowrap;
             overflow-x: auto;
             padding-bottom: 6px;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
         }
 
         .menu-cat-tab::-webkit-scrollbar {
-            height: 3px;
+            display: none;
         }
 
         .cat-tab {
@@ -58,6 +61,9 @@
             transition: all 0.15s;
             border: 2px solid transparent;
             box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
         }
 
         .pos-item:hover {
@@ -68,15 +74,16 @@
 
         .pos-item img {
             width: 100%;
-            height: 70px;
-            object-fit: cover;
+            height: 120px;
+            object-fit: contain;
             border-radius: 7px;
             margin-bottom: 8px;
+            background-color: #f8fafc;
         }
 
         .pos-item .item-img-placeholder {
             width: 100%;
-            height: 70px;
+            height: 120px;
             background: #f8fafc;
             border-radius: 7px;
             display: flex;
@@ -85,10 +92,18 @@
             margin-bottom: 8px;
         }
 
+        @media (min-width: 1200px) {
+            .col-xl-20 {
+                flex: 0 0 auto;
+                width: 20%;
+            }
+        }
+
         .pos-item .item-name {
             font-size: 0.82rem;
             font-weight: 600;
             line-height: 1.3;
+            flex-grow: 1;
         }
 
         .pos-item .item-price {
@@ -152,7 +167,7 @@
             appearance: none;
             background-color: #fff;
         }
-        
+
         .form-select:focus {
             border-color: var(--primary);
             box-shadow: 0 0 0 3px rgba(139, 0, 0, 0.15);
@@ -161,6 +176,30 @@
         .form-select-sm {
             padding: 6px 10px;
             font-size: 0.85rem;
+        }
+
+        .pos-filter-select {
+            border-radius: 20px;
+            border: 1px solid #e2e8f0;
+            background-color: #f1f5f9;
+            color: #475569;
+            font-weight: 600;
+            font-size: 0.82rem;
+            padding: 6px 30px 6px 14px;
+            box-shadow: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .pos-filter-select:hover {
+            background-color: #e2e8f0;
+            border-color: #cbd5e1;
+        }
+
+        .pos-filter-select:focus {
+            background-color: #fff;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(139, 0, 0, 0.15);
         }
 
         .pay-btn {
@@ -461,7 +500,15 @@
             <div class="mb-2 d-flex gap-2 align-items-center">
                 <input type="text" id="posSearch" class="form-control form-control-sm"
                     placeholder="Search or scan barcode...">
-                <select id="posSort" class="form-select form-select-sm" style="max-width:160px" onchange="sortItems()">
+                <select id="posCategory" class="form-select pos-filter-select" style="max-width:150px" onchange="filterByCategory(this.value)">
+                    <option value="all">Category: All</option>
+                    @foreach ($categories as $cat)
+                        @if ($cat->activeMenuItems->count())
+                            <option value="{{ $cat->id }}">{{ $cat->name }}</option>
+                        @endif
+                    @endforeach
+                </select>
+                <select id="posSort" class="form-select pos-filter-select" style="max-width:130px" onchange="sortItems()">
                     <option value="default">Sort: Default</option>
                     <option value="name_asc">Name A→Z</option>
                     <option value="name_desc">Name Z→A</option>
@@ -480,7 +527,7 @@
             <div class="row g-2" id="posMenuGrid">
                 @foreach ($categories as $cat)
                     @foreach ($cat->activeMenuItems as $item)
-                        <div class="col-xl-2 col-lg-3 col-md-4 col-6 pos-item-wrap" data-cat="{{ $cat->id }}"
+                        <div class="col-xl-20 col-lg-3 col-md-4 col-6 pos-item-wrap" data-cat="{{ $cat->id }}"
                             data-name="{{ strtolower($item->name) }}" data-sku="{{ $item->sku }}"
                             data-barcode="{{ $item->barcode }}" data-price="{{ $item->effective_price }}">
                             <div class="pos-item"
@@ -548,12 +595,21 @@
 
                 <!-- Order Type -->
                 <div class="btn-group btn-group-sm w-100 mb-2">
-                    <input type="radio" class="btn-check" name="orderType" id="ot1" value="dine_in" checked>
+                    <input type="radio" class="btn-check" name="orderType" id="ot1" value="dine_in" checked onchange="toggleOrderTypeOptions()">
                     <label class="btn btn-outline-secondary" for="ot1">Dine In</label>
-                    <input type="radio" class="btn-check" name="orderType" id="ot2" value="takeaway">
+                    <input type="radio" class="btn-check" name="orderType" id="ot2" value="takeaway" onchange="toggleOrderTypeOptions()">
                     <label class="btn btn-outline-secondary" for="ot2">Takeaway</label>
-                    <input type="radio" class="btn-check" name="orderType" id="ot3" value="delivery">
+                    <input type="radio" class="btn-check" name="orderType" id="ot3" value="delivery" onchange="toggleOrderTypeOptions()">
                     <label class="btn btn-outline-secondary" for="ot3">Delivery</label>
+                </div>
+                
+                <div id="deliveryRiderBlock" style="display: none;" class="mb-2">
+                    <select id="cartRider" class="form-select form-select-sm">
+                        <option value="">-- Assign Rider (Optional) --</option>
+                        @foreach ($riders as $rider)
+                            <option value="{{ $rider->id }}">{{ $rider->name }}</option>
+                        @endforeach
+                    </select>
                 </div>
 
                 <!-- Totals -->
@@ -614,31 +670,36 @@
                         <label class="form-label fw-semibold">Amount Received</label>
                         <div class="input-group">
                             <span class="input-group-text bg-white border-end-0">৳</span>
-                            <input type="number" id="receivedAmount" class="form-control border-start-0 ps-0" step="0.01"
-                                placeholder="0.00" oninput="calcChange()" style="font-size: 1.2rem; font-weight: bold; color: var(--primary);">
+                            <input type="number" id="receivedAmount" class="form-control border-start-0 ps-0"
+                                step="0.01" placeholder="0.00" oninput="calcChange()"
+                                style="font-size: 1.2rem; font-weight: bold; color: var(--primary);">
                         </div>
                     </div>
-                    
+
                     <div class="bg-light rounded p-2 mb-3" id="changeInfo">
-                        <div class="d-flex justify-content-between small align-items-center"><span>Change:</span><span id="changeAmount"
-                                class="fw-bold text-success fs-5">৳0.00</span></div>
+                        <div class="d-flex justify-content-between small align-items-center"><span>Change:</span><span
+                                id="changeAmount" class="fw-bold text-success fs-5">৳0.00</span></div>
                     </div>
 
                     <hr class="text-muted">
 
                     <div class="row g-2 mb-2">
                         <div class="col-12 col-md-6">
-                            <label class="form-label fw-semibold small text-muted mb-1">Customer Name <span class="text-danger">*</span></label>
+                            <label class="form-label fw-semibold small text-muted mb-1">Customer Name <span
+                                    class="text-danger">*</span></label>
                             <div class="input-group input-group-sm">
                                 <span class="input-group-text bg-white"><i class="bi bi-person"></i></span>
-                                <input type="text" id="walkinName" class="form-control" placeholder="e.g. John Doe" required>
+                                <input type="text" id="walkinName" class="form-control" placeholder="e.g. John Doe"
+                                    required>
                             </div>
                         </div>
                         <div class="col-12 col-md-6">
-                            <label class="form-label fw-semibold small text-muted mb-1">Customer Phone <span class="text-danger">*</span></label>
+                            <label class="form-label fw-semibold small text-muted mb-1">Customer Phone <span
+                                    class="text-danger">*</span></label>
                             <div class="input-group input-group-sm">
                                 <span class="input-group-text bg-white"><i class="bi bi-telephone"></i></span>
-                                <input type="text" id="walkinPhone" class="form-control" placeholder="e.g. 01712345678" required>
+                                <input type="text" id="walkinPhone" class="form-control"
+                                    placeholder="e.g. 01712345678" required>
                             </div>
                         </div>
                     </div>
@@ -1040,7 +1101,7 @@
         function confirmPayment() {
             const wName = document.getElementById('walkinName').value.trim();
             const wPhone = document.getElementById('walkinPhone').value.trim();
-            
+
             if (!wName) {
                 alert('Customer Name is required to proceed with payment.');
                 document.getElementById('walkinName').focus();
@@ -1095,6 +1156,7 @@
                 quantity: i.qty
             }));
             const total = parseFloat(document.getElementById('cartTotal').textContent.replace('৳', ''));
+            const riderSelect = document.getElementById('cartRider');
             const payload = {
                 items,
                 payment_status: paymentStatus,
@@ -1103,10 +1165,12 @@
                 order_type: orderType,
                 table_ids: selectedTables,
                 customer_id: customerId,
+                walkin_name: document.getElementById('walkinName').value.trim() || null,
                 delivery_address: deliveryAddress,
                 delivery_phone: deliveryPhone,
                 coupon_code: couponData ? document.getElementById('couponCode').value : null,
                 reservation_id: activeReservationId,
+                rider_id: riderSelect ? riderSelect.value : null,
             };
             fetch('{{ route('pos.process') }}', {
                     method: 'POST',
@@ -1160,17 +1224,19 @@
             const total = Math.max(0, sub + tax - disc);
             const change = lastOrderData.change ?? 0;
             document.getElementById('rp-order-no').textContent = lastOrderData.order_number;
-            document.getElementById('rp-date').textContent = new Date().toLocaleString('en-US', { timeZone: 'Asia/Dhaka' });
-            
+            document.getElementById('rp-date').textContent = new Date().toLocaleString('en-US', {
+                timeZone: 'Asia/Dhaka'
+            });
+
             const wName = document.getElementById('walkinName').value;
             const wPhone = document.getElementById('walkinPhone').value;
-            if(wName) {
+            if (wName) {
                 document.getElementById('rp-customer-name').textContent = wName;
                 document.getElementById('rp-customer-name-row').style.display = 'flex';
             } else {
                 document.getElementById('rp-customer-name-row').style.display = 'none';
             }
-            if(wPhone) {
+            if (wPhone) {
                 document.getElementById('rp-customer-phone').textContent = wPhone;
                 document.getElementById('rp-customer-phone-row').style.display = 'flex';
             } else {
@@ -1207,6 +1273,14 @@
             document.getElementById('rp-customer-phone-row').style.display = 'none';
         }
 
+        function toggleOrderTypeOptions() {
+            const ot = document.querySelector('input[name="orderType"]:checked').value;
+            const riderBlock = document.getElementById('deliveryRiderBlock');
+            if (riderBlock) {
+                riderBlock.style.display = (ot === 'delivery') ? 'block' : 'none';
+            }
+        }
+
         // Sort
         function sortItems() {
             const val = document.getElementById('posSort').value;
@@ -1224,14 +1298,27 @@
         }
 
         // Category filter
+        function filterByCategory(cat) {
+            // Update tabs if they exist
+            document.querySelectorAll('.cat-tab').forEach(b => b.classList.remove('active'));
+            const activeTab = document.querySelector(`.cat-tab[data-cat="${cat}"]`);
+            if (activeTab) activeTab.classList.add('active');
+
+            // Update items
+            document.querySelectorAll('.pos-item-wrap').forEach(el => {
+                el.style.display = (cat === 'all' || el.dataset.cat === cat) ? '' : 'none';
+            });
+
+            // Update dropdown if changed from tab
+            const select = document.getElementById('posCategory');
+            if (select && select.value !== cat) {
+                select.value = cat;
+            }
+        }
+
         document.querySelectorAll('.cat-tab').forEach(btn => {
             btn.addEventListener('click', () => {
-                document.querySelectorAll('.cat-tab').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                const cat = btn.dataset.cat;
-                document.querySelectorAll('.pos-item-wrap').forEach(el => {
-                    el.style.display = (cat === 'all' || el.dataset.cat === cat) ? '' : 'none';
-                });
+                filterByCategory(btn.dataset.cat);
             });
         });
 

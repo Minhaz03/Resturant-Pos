@@ -98,6 +98,10 @@ Route::middleware(['tenant', 'auth', 'verified'])->group(function () {
     Route::get('/delivery', [DeliveryController::class, 'index'])->name('delivery.index');
     Route::post('/delivery/{delivery}/assign', [DeliveryController::class, 'assign'])->name('delivery.assign');
     Route::patch('/delivery/{delivery}/status', [DeliveryController::class, 'updateStatus'])->name('delivery.update-status');
+    Route::get('/delivery/riders', [DeliveryController::class, 'riders'])->name('delivery.riders');
+    Route::post('/delivery/riders', [DeliveryController::class, 'storeRider'])->name('delivery.riders.store');
+    Route::put('/delivery/riders/{user}', [DeliveryController::class, 'updateRider'])->name('delivery.riders.update');
+    Route::delete('/delivery/riders/{user}', [DeliveryController::class, 'destroyRider'])->name('delivery.riders.destroy');
 
     // Coupons
     Route::resource('coupons', CouponController::class);

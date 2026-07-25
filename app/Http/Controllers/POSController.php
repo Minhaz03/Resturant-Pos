@@ -25,8 +25,9 @@ class POSController extends Controller
         $categories = Category::with('activeMenuItems')->where('status', true)->orderBy('sort_order')->get();
         $tables = Table::all()->sortBy('table_number');
         $customers = Customer::where('status', 'active')->orderBy('name')->get();
+        $riders = \App\Models\User::role('delivery_staff')->where('status', 'active')->get();
         $setting = RestaurantSetting::first();
-        return view('pos.index', compact('categories', 'tables', 'customers', 'setting'));
+        return view('pos.index', compact('categories', 'tables', 'customers', 'riders', 'setting'));
     }
 
     public function processOrder(Request $request)
@@ -197,12 +198,21 @@ class POSController extends Controller
                     if (empty($phone)) $phone = $customer?->phone;
                 }
 
+                $deliveryName = $request->walkin_name;
+                if (empty($deliveryName) && $request->customer_id) {
+                    $customer = Customer::find($request->customer_id);
+                    $deliveryName = $customer?->name;
+                }
+
                 DeliveryOrder::create([
                     'order_id'         => $order->id,
-                    'status'           => 'pending',
+                    'rider_id'         => $request->rider_id,
+                    'status'           => $request->rider_id ? 'assigned' : 'pending',
+                    'assigned_at'      => $request->rider_id ? now() : null,
                     'tracking_code'    => 'TRK-' . strtoupper(str()->random(8)),
                     'delivery_address' => $address ?: 'Address not provided',
                     'delivery_phone'   => $phone ?: 'Phone not provided',
+                    'delivery_name'    => $deliveryName,
                     'delivery_notes'   => $request->delivery_notes,
                 ]);
             }
