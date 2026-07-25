@@ -500,7 +500,8 @@
             <div class="mb-2 d-flex gap-2 align-items-center">
                 <input type="text" id="posSearch" class="form-control form-control-sm"
                     placeholder="Search or scan barcode...">
-                <select id="posCategory" class="form-select pos-filter-select" style="max-width:150px" onchange="filterByCategory(this.value)">
+                <select id="posCategory" class="form-select pos-filter-select" style="max-width:150px"
+                    onchange="filterByCategory(this.value)">
                     <option value="all">Category: All</option>
                     @foreach ($categories as $cat)
                         @if ($cat->activeMenuItems->count())
@@ -595,14 +596,17 @@
 
                 <!-- Order Type -->
                 <div class="btn-group btn-group-sm w-100 mb-2">
-                    <input type="radio" class="btn-check" name="orderType" id="ot1" value="dine_in" checked onchange="toggleOrderTypeOptions()">
+                    <input type="radio" class="btn-check" name="orderType" id="ot1" value="dine_in" checked
+                        onchange="toggleOrderTypeOptions()">
                     <label class="btn btn-outline-secondary" for="ot1">Dine In</label>
-                    <input type="radio" class="btn-check" name="orderType" id="ot2" value="takeaway" onchange="toggleOrderTypeOptions()">
+                    <input type="radio" class="btn-check" name="orderType" id="ot2" value="takeaway"
+                        onchange="toggleOrderTypeOptions()">
                     <label class="btn btn-outline-secondary" for="ot2">Takeaway</label>
-                    <input type="radio" class="btn-check" name="orderType" id="ot3" value="delivery" onchange="toggleOrderTypeOptions()">
+                    <input type="radio" class="btn-check" name="orderType" id="ot3" value="delivery"
+                        onchange="toggleOrderTypeOptions()">
                     <label class="btn btn-outline-secondary" for="ot3">Delivery</label>
                 </div>
-                
+
                 <div id="deliveryRiderBlock" style="display: none;" class="mb-2">
                     <select id="cartRider" class="form-select form-select-sm">
                         <option value="">-- Assign Rider (Optional) --</option>
