@@ -33,6 +33,7 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             CategoryAndMenuSeeder::class,
             TableSeeder::class,
+            PlanSeeder::class,
             DemoDataSeeder::class,
         ]);
     }

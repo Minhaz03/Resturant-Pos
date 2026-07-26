@@ -206,6 +206,9 @@
             <i class="bi bi-bar-chart-line"></i><span>Reports</span>
         </a>
         @endcan
+        <a href="{{ route('dashboard.billing') }}" class="sidebar-link {{ request()->routeIs('dashboard.billing') ? 'active' : '' }}">
+            <i class="bi bi-credit-card"></i><span>Billing & Subscription</span>
+        </a>
 
         <div class="nav-section-title">System</div>
         @can('view users')

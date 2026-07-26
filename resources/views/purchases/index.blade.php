@@ -3,7 +3,7 @@
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div><h4 class="fw-bold mb-1" style="color:var(--secondary)">Purchase Orders</h4><p class="text-muted small mb-0">Manage supplier orders</p></div>
-    @can('create purchase_orders')<a href="{{ route('purchases.create') }}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>New PO</a>@endcan
+    @can('create purchases')<a href="{{ route('purchases.create') }}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>New PO</a>@endcan
 </div>
 <div class="card mb-3"><div class="card-body py-2">
     <form method="GET" class="d-flex gap-2 flex-wrap">
@@ -43,7 +43,7 @@
                     <div class="d-flex gap-1">
                         <a href="{{ route('purchases.show',$po) }}" class="btn btn-sm btn-outline-info py-0 px-2"><i class="bi bi-eye"></i></a>
                         @if($po->status !== 'received' && $po->status !== 'cancelled')
-                        @can('edit purchase_orders')<a href="{{ route('purchases.edit',$po) }}" class="btn btn-sm btn-outline-primary py-0 px-2"><i class="bi bi-pencil"></i></a>@endcan
+                        @can('edit purchases')<a href="{{ route('purchases.edit',$po) }}" class="btn btn-sm btn-outline-primary py-0 px-2"><i class="bi bi-pencil"></i></a>@endcan
                         @endif
                     </div>
                 </td>

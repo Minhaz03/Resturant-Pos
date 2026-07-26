@@ -63,7 +63,7 @@
         </select></td>
         <td><input type="number" name="items[INDEX][quantity]" class="form-control form-control-sm item-qty" placeholder="0" step="0.01" min="0.01" required></td>
         <td><input type="text" name="items[INDEX][unit]" class="form-control form-control-sm item-unit" placeholder="kg" readonly></td>
-        <td><input type="number" name="items[INDEX][unit_price]" class="form-control form-control-sm item-price" placeholder="0.00" step="0.01" min="0" required></td>
+        <td><input type="number" name="items[INDEX][unit_cost]" class="form-control form-control-sm item-price" placeholder="0.00" step="0.01" min="0" required></td>
         <td class="fw-semibold item-total">৳0.00<input type="hidden" name="items[INDEX][total_price]" class="item-total-input" value="0"></td>
         <td><button type="button" class="btn btn-sm btn-outline-danger py-0 px-2" onclick="removeItem(this)"><i class="bi bi-x"></i></button></td>
     </tr>
