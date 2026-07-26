@@ -81,11 +81,23 @@ class DashboardController extends Controller
             ->groupBy('status')->get();
 
         // Payment method breakdown (today)
-        $paymentMethods = Payment::join('orders', 'payments.order_id', '=', 'orders.id')
+        $rawPaymentMethods = Payment::join('orders', 'payments.order_id', '=', 'orders.id')
             ->whereDate('orders.created_at', today())
             ->where('payments.status', 'completed')
             ->select('payments.method', DB::raw('SUM(payments.amount) as total'))
-            ->groupBy('payments.method')->get();
+            ->groupBy('payments.method')->get()->keyBy('method');
+
+        $paymentMethods = collect([
+            ['method' => 'Cash', 'total' => (float) ($rawPaymentMethods->get('cash')->total ?? 0)],
+            ['method' => 'Card', 'total' => (float) ($rawPaymentMethods->get('card')->total ?? 0)],
+            ['method' => 'Mobile Banking', 'total' => (float) ($rawPaymentMethods->get('mobile_banking')->total ?? 0)],
+        ]);
+
+        foreach ($rawPaymentMethods as $key => $data) {
+            if (!in_array($key, ['cash', 'card', 'mobile_banking'])) {
+                $paymentMethods->push(['method' => ucfirst($key), 'total' => (float) $data->total]);
+            }
+        }
 
         return view('dashboard', compact(
             'todaySales', 'todayOrders', 'todayNewCustomers',

@@ -7,7 +7,8 @@
             <p class="text-muted small mb-0">Manage your restaurant menu</p>
         </div>
         @can('create menu')
-            <a href="{{ route('menu.create') }}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Add Item</a>
+            <a href="{{ route('menu.create') }}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Add Menu
+                Item</a>
         @endcan
     </div>
 
@@ -67,7 +68,8 @@
                                     @else
                                         <div
                                             style="width:44px;height:44px;background:#f1f5f9;border-radius:8px;display:flex;align-items:center;justify-content:center">
-                                            <i class="bi bi-image text-muted"></i></div>
+                                            <i class="bi bi-image text-muted"></i>
+                                        </div>
                                     @endif
                                 </td>
                                 <td>

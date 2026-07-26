@@ -17,7 +17,8 @@ class ReservationController extends Controller
         if ($request->status) $query->where('status', $request->status);
         $reservations = $query->orderBy('reservation_date')->orderBy('reservation_time')->paginate(15);
         $upcomingCount = Reservation::upcoming()->count();
-        return view('reservations.index', compact('reservations', 'upcomingCount'));
+        $tables = Table::orderBy('table_number')->get();
+        return view('reservations.index', compact('reservations', 'upcomingCount', 'tables'));
     }
 
     public function create()
@@ -39,6 +40,7 @@ class ReservationController extends Controller
             'reservation_time' => 'required',
             'guest_count' => 'required|integer|min:1',
             'deposit_amount' => 'nullable|numeric|min:0',
+            'deposit_payment_method' => 'nullable|string|in:cash,card,mobile_banking',
             'notes' => 'nullable|string',
         ]);
 
@@ -76,6 +78,7 @@ class ReservationController extends Controller
             'guest_count' => 'required|integer|min:1',
             'status' => 'required|in:pending,confirmed,seated,completed,cancelled,no_show',
             'deposit_amount' => 'nullable|numeric|min:0',
+            'deposit_payment_method' => 'nullable|string|in:cash,card,mobile_banking',
             'notes' => 'nullable|string',
         ]);
 
