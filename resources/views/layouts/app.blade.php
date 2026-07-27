@@ -504,19 +504,17 @@
                 </a>
             @endcan
 
-            <div class="nav-section-title">Finance & Reports</div>
-            @can('view coupons')
-                <a href="{{ route('coupons.index') }}"
-                    class="sidebar-link {{ request()->routeIs('coupons.*') ? 'active' : '' }}">
-                    <i class="bi bi-percent"></i><span>Coupons</span>
-                </a>
-            @endcan
-            @can('view reports')
-                <a href="{{ route('reports.sales') }}"
-                    class="sidebar-link {{ request()->routeIs('reports.*') ? 'active' : '' }}">
-                    <i class="bi bi-bar-chart-line"></i><span>Reports</span>
-                </a>
-            @endcan
+        <div class="nav-section-title">Finance & Reports</div>
+        @can('view coupons')
+        <a href="{{ route('coupons.index') }}" class="sidebar-link {{ request()->routeIs('coupons.*') ? 'active' : '' }}">
+            <i class="bi bi-percent"></i><span>Coupons</span>
+        </a>
+        @endcan
+        @can('view reports')
+        <a href="{{ route('reports.sales') }}" class="sidebar-link {{ request()->routeIs('reports.*') ? 'active' : '' }}">
+            <i class="bi bi-bar-chart-line"></i><span>Reports</span>
+        </a>
+        @endcan
 
             <div class="nav-section-title">System</div>
             @can('view users')

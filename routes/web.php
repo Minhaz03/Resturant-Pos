@@ -33,6 +33,14 @@ Route::middleware(['tenant', 'auth', 'verified'])->group(function () {
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+    // Billing & Subscription
+    Route::get('/billing', [\App\Http\Controllers\BillingController::class, 'index'])->name('dashboard.billing');
+    Route::post('/billing/subscribe', [\App\Http\Controllers\BillingController::class, 'subscribe'])->name('dashboard.billing.subscribe');
+    Route::post('/billing/payment/success', [\App\Http\Controllers\BillingController::class, 'paymentSuccess'])->name('dashboard.billing.payment.success');
+    Route::post('/billing/payment/fail', [\App\Http\Controllers\BillingController::class, 'paymentFail'])->name('dashboard.billing.payment.fail');
+    Route::post('/billing/payment/cancel', [\App\Http\Controllers\BillingController::class, 'paymentCancel'])->name('dashboard.billing.payment.cancel');
+    Route::post('/billing/payment/ipn', [\App\Http\Controllers\BillingController::class, 'paymentIpn'])->name('dashboard.billing.payment.ipn');
+
     // Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

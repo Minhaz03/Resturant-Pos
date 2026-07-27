@@ -26,6 +26,10 @@ return Application::configure(basePath: dirname(__DIR__))
             }
             return route('login');
         });
+
+        $middleware->validateCsrfTokens(except: [
+            '/billing/payment/*',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
