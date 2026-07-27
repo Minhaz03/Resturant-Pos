@@ -150,6 +150,12 @@
             border-color: var(--primary);
         }
 
+        .qty-btn.text-danger:hover {
+            background: #ef4444 !important;
+            color: #fff !important;
+            border-color: #ef4444 !important;
+        }
+
         .cart-footer {
             padding: 15px;
             border-top: 1px solid #f1f5f9;
@@ -341,7 +347,7 @@
             background-color: #f8fafc !important;
             border: 1px solid #e2e8f0 !important;
             border-radius: 20px !important;
-            padding: 2px 10px 2px 24px !important;
+            padding: 2px 10px 2px 28px !important;
             font-size: 0.78rem !important;
             font-weight: 600 !important;
             color: #334155 !important;
@@ -354,23 +360,29 @@
         }
 
         .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice:hover {
-            background-color: #f8fafc !important;
-            border-color: #e2e8f0 !important;
+            background-color: #f1f5f9 !important;
+            border-color: #cbd5e1 !important;
             transform: none !important;
             box-shadow: none !important;
         }
 
         .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice__remove {
             position: absolute !important;
-            left: 8px !important;
+            left: 6px !important;
             top: 50% !important;
             transform: translateY(-50%) !important;
-            color: #94a3b8 !important;
+            color: transparent !important;
+            /* Hides the default 'x' */
             border: none !important;
-            background: none !important;
-            font-size: 0.95rem !important;
-            font-weight: bold !important;
-            transition: color 0.15s ease !important;
+            background-color: transparent !important;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ef4444' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='18' y1='6' x2='6' y2='18'%3E%3C/line%3E%3Cline x1='6' y1='6' x2='18' y2='18'%3E%3C/line%3E%3C/svg%3E") !important;
+            background-size: 14px 14px !important;
+            background-position: center !important;
+            background-repeat: no-repeat !important;
+            border-radius: 50% !important;
+            width: 18px !important;
+            height: 18px !important;
+            transition: all 0.2s ease !important;
             padding: 0 !important;
             margin: 0 !important;
             display: inline-flex !important;
@@ -379,8 +391,8 @@
         }
 
         .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice__remove:hover {
-            color: #ef4444 !important;
-            background: none !important;
+            background-color: #fee2e2 !important;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23dc2626' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='18' y1='6' x2='6' y2='18'%3E%3C/line%3E%3Cline x1='6' y1='6' x2='18' y2='18'%3E%3C/line%3E%3C/svg%3E") !important;
         }
 
         .select2-container--bootstrap-5 .select2-selection--multiple .select2-search {
@@ -689,21 +701,18 @@
 
                     <div class="row g-2 mb-2">
                         <div class="col-12 col-md-6">
-                            <label class="form-label fw-semibold small text-muted mb-1">Customer Name <span
-                                    class="text-danger">*</span></label>
+                            <label class="form-label fw-semibold small text-muted mb-1">Customer Name (Optional)</label>
                             <div class="input-group input-group-sm">
                                 <span class="input-group-text bg-white"><i class="bi bi-person"></i></span>
-                                <input type="text" id="walkinName" class="form-control" placeholder="e.g. John Doe"
-                                    required>
+                                <input type="text" id="walkinName" class="form-control" placeholder="e.g. John Doe">
                             </div>
                         </div>
                         <div class="col-12 col-md-6">
-                            <label class="form-label fw-semibold small text-muted mb-1">Customer Phone <span
-                                    class="text-danger">*</span></label>
+                            <label class="form-label fw-semibold small text-muted mb-1">Customer Phone (Optional)</label>
                             <div class="input-group input-group-sm">
                                 <span class="input-group-text bg-white"><i class="bi bi-telephone"></i></span>
                                 <input type="text" id="walkinPhone" class="form-control"
-                                    placeholder="e.g. 01712345678" required>
+                                    placeholder="e.g. 01712345678">
                             </div>
                         </div>
                     </div>
@@ -1016,7 +1025,7 @@
                 <div class="qty-btn" onclick="updateQty(${item.id},-1)">-</div>
                 <span class="px-1 fw-bold">${item.qty}</span>
                 <div class="qty-btn" onclick="updateQty(${item.id},1)">+</div>
-                <div class="qty-btn text-danger" onclick="removeFromCart(${item.id})"><i class="bi bi-x"></i></div>
+                <div class="qty-btn text-danger" title="Remove item" onclick="removeFromCart(${item.id})"><i class="bi bi-x"></i></div>
             </div>
         </div>`).join('');
             updateTotals();
@@ -1103,20 +1112,6 @@
         }
 
         function confirmPayment() {
-            const wName = document.getElementById('walkinName').value.trim();
-            const wPhone = document.getElementById('walkinPhone').value.trim();
-
-            if (!wName) {
-                alert('Customer Name is required to proceed with payment.');
-                document.getElementById('walkinName').focus();
-                return;
-            }
-            if (!wPhone) {
-                alert('Customer Phone is required to proceed with payment.');
-                document.getElementById('walkinPhone').focus();
-                return;
-            }
-
             processOrderRequest('paid', selectedMethod, parseFloat(document.getElementById('receivedAmount').value) ||
                 parseFloat(document.getElementById('cartTotal').textContent.replace('৳', '')));
         }
