@@ -23,8 +23,14 @@ use App\Http\Controllers\NotificationController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('central.landing');
+    $plans = \App\Models\Plan::where('is_active', true)->orderBy('price')->get();
+    return view('central.landing', compact('plans'));
 });
+
+Route::get('/pricing', function () {
+    $plans = \App\Models\Plan::where('is_active', true)->orderBy('price')->get();
+    return view('central.pricing.index', compact('plans'));
+})->name('central.pricing');
 
 Route::post('/register-tenant', [\App\Http\Controllers\Central\TenantRegistrationController::class, 'store'])->name('tenant.register');
 

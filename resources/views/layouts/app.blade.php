@@ -528,6 +528,10 @@
                     class="sidebar-link {{ request()->routeIs('settings.*') ? 'active' : '' }}">
                     <i class="bi bi-gear"></i><span>Settings</span>
                 </a>
+                <a href="{{ route('dashboard.billing') }}"
+                    class="sidebar-link {{ request()->routeIs('dashboard.billing') ? 'active' : '' }}">
+                    <i class="bi bi-credit-card"></i><span>Subscription</span>
+                </a>
             @endcan
         </div>
 

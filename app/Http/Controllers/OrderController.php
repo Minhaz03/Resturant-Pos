@@ -29,7 +29,8 @@ class OrderController extends Controller
 
     public function show(Order $order)
     {
-        $order->load(['tables', 'customer', 'items.menuItem', 'payment', 'invoice', 'delivery', 'waiter', 'kitchenOrders']);
+        $order->load(['tables', 'customer', 'items.menuItem', 'payment.processedBy', 'invoice', 'delivery', 'waiter', 'kitchenOrders']);
+
         return view('orders.show', compact('order'));
     }
 
@@ -146,8 +147,8 @@ class OrderController extends Controller
 
         $timestamps = [
             'confirmed' => 'confirmed_at',
-            'ready' => 'ready_at',
-            'served' => 'served_at',
+            'ready'     => 'ready_at',
+            'served'    => 'served_at',
             'completed' => 'completed_at',
         ];
 
@@ -157,6 +158,19 @@ class OrderController extends Controller
         }
 
         $order->update($updateData);
+
+        // Sync order item statuses to match the new order status.
+        // Mapping: order status → valid order_item status enum value.
+        $itemStatusMap = [
+            'preparing' => 'preparing',
+            'ready'     => 'ready',
+            'served'    => 'served',
+            'completed' => 'served',   // items have no 'completed' state; 'served' is the final fulfilled state
+            'cancelled' => 'cancelled',
+        ];
+        if (isset($itemStatusMap[$newStatus])) {
+            $order->items()->update(['status' => $itemStatusMap[$newStatus]]);
+        }
 
         if (in_array($newStatus, ['completed', 'cancelled']) && $order->tables->count() > 0) {
             Table::whereIn('id', $order->tables->pluck('id'))->update(['status' => 'available']);
@@ -179,28 +193,31 @@ class OrderController extends Controller
         try {
             $paymentNumber = 'PAY-' . date('Ymd') . '-' . str_pad($order->id, 5, '0', STR_PAD_LEFT);
             \App\Models\Payment::create([
-                'order_id' => $order->id,
+                'order_id'       => $order->id,
                 'payment_number' => $paymentNumber,
-                'amount' => $order->total_amount,
-                'method' => $request->payment_method,
-                'status' => 'completed',
-                'change_amount' => max(0, $request->payment_amount - $order->total_amount),
-                'split_details' => $request->split_details,
-                'processed_by' => auth()->id(),
-                'paid_at' => now(),
+                'amount'         => $order->total_amount,
+                'method'         => $request->payment_method,
+                'status'         => 'completed',
+                'change_amount'  => max(0, $request->payment_amount - $order->total_amount),
+                'split_details'  => $request->split_details,
+                'processed_by'   => auth()->id(),
+                'paid_at'        => now(),
             ]);
 
             if ($order->invoice) {
                 $order->invoice->update([
-                    'status' => 'paid',
+                    'status'  => 'paid',
                     'paid_at' => now(),
                 ]);
             }
 
             $order->update([
-                'status' => 'completed',
+                'status'       => 'completed',
                 'completed_at' => now()
             ]);
+
+            // Mark all order items as served (fulfilled) when order is completed via payment
+            $order->items()->update(['status' => 'served']);
 
             if ($order->tables->count() > 0) {
                 Table::whereIn('id', $order->tables->pluck('id'))->update(['status' => 'available']);

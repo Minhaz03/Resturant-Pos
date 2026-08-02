@@ -119,6 +119,38 @@
 .payment-modal .method-btn:hover {
     border-color: var(--primary);
 }
+
+/* Pay-First Warning Modal */
+.pay-first-banner {
+    background: linear-gradient(135deg, #fff7ed 0%, #fef2f2 100%);
+    border: 2px solid #fca5a5;
+    border-radius: 14px;
+    padding: 18px 20px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+}
+.pay-first-banner .pf-icon {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: #fee2e2;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    font-size: 1.25rem;
+    color: #dc2626;
+}
+.pay-first-banner .pf-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #b91c1c;
+    letter-spacing: 0.03em;
+}
+.pay-first-banner .pf-sub {
+    font-size: 0.82rem;
+    color: #6b7280;
+    margin-top: 2px;
+}
 </style>
 
 <div class="card"><div class="card-body p-0"><div class="table-responsive">
@@ -127,7 +159,12 @@
         <tbody>
             @forelse($orders as $order)
             <tr>
-                <td><a href="{{ route('orders.show',$order) }}" class="fw-semibold text-decoration-none" style="color:var(--secondary)">{{ $order->order_number }}</a></td>
+                <td>
+                    <a href="{{ route('orders.show',$order) }}" class="fw-semibold text-decoration-none d-block" style="color:var(--secondary)">{{ $order->order_number }}</a>
+                    <span class="badge mt-1" style="font-size:0.68rem;letter-spacing:0.03em;background:{{ match($order->status){'pending'=>'#fef3c7','confirmed'=>'#dbeafe','preparing'=>'#ede9fe','ready'=>'#d1fae5','served'=>'#cffafe','completed'=>'#dcfce7','cancelled'=>'#fee2e2',default=>'#f3f4f6'} }};color:{{ match($order->status){'pending'=>'#92400e','confirmed'=>'#1e40af','preparing'=>'#5b21b6','ready'=>'#065f46','served'=>'#164e63','completed'=>'#166534','cancelled'=>'#991b1b',default=>'#374151'} }}">
+                        <i class="bi {{ match($order->status){'pending'=>'bi-hourglass-split','confirmed'=>'bi-check-circle','preparing'=>'bi-fire','ready'=>'bi-bell','served'=>'bi-person-check','completed'=>'bi-check2-all','cancelled'=>'bi-x-circle',default=>'bi-circle'} }} me-1"></i>{{ ucfirst($order->status) }}
+                    </span>
+                </td>
                 <td>
                     <span class="badge bg-light text-dark">{{ str_replace('_',' ',ucfirst($order->type)) }}</span>
                     @if($order->tables->count() > 0)<br><small class="text-muted">{{ $order->tables->pluck('table_number')->implode(', ') }}</small>@endif
@@ -163,6 +200,17 @@
                             @foreach(['confirmed','preparing','ready','served','completed','cancelled'] as $s)
                             @if($s != $order->status)
                             <li>
+                                @if($s === 'completed' && !$order->payment)
+                                {{-- Unpaid + Mark as Completed → intercept and show Pay First modal --}}
+                                <button type="button" class="dropdown-item text-warning fw-semibold"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#payFirstModal-{{ $order->id }}">
+                                    <span class="action-icon icon-completed">
+                                        <i class="bi bi-check2-all"></i>
+                                    </span>
+                                    Mark as Completed
+                                </button>
+                                @else
                                 <form method="POST" action="{{ route('orders.update-status',$order) }}">
                                     @csrf @method('PATCH')
                                     <input type="hidden" name="status" value="{{ $s }}">
@@ -173,6 +221,7 @@
                                         Mark as {{ ucfirst($s) }}
                                     </button>
                                 </form>
+                                @endif
                             </li>
                             @endif
                             @endforeach
@@ -206,6 +255,8 @@
 
 @foreach($orders as $order)
 @if(!$order->payment && $order->status !== 'cancelled')
+
+{{-- ── Settle Payment Modal (from dropdown) ─────────────────── --}}
 <div class="modal fade" id="settleModal-{{ $order->id }}" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <form method="POST" action="{{ route('orders.settle', $order) }}" class="modal-content payment-modal border-0 shadow">
@@ -254,6 +305,76 @@
         </form>
     </div>
 </div>
+
+{{-- ── Pay First Modal (intercepted from Mark as Completed) ─── --}}
+<div class="modal fade" id="payFirstModal-{{ $order->id }}" tabindex="-1" aria-labelledby="payFirstLabel-{{ $order->id }}">
+    <div class="modal-dialog modal-dialog-centered">
+        <form method="POST" action="{{ route('orders.settle', $order) }}" class="modal-content payment-modal border-0 shadow">
+            @csrf
+            <div class="modal-header border-0 pb-2">
+                <h5 class="modal-title fw-bold" id="payFirstLabel-{{ $order->id }}">Complete Order #{{ $order->order_number }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+
+                {{-- PAY FIRST banner --}}
+                <div class="pay-first-banner">
+                    <div class="pf-icon">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                    </div>
+                    <div>
+                        <div class="pf-title">⚠ PAY FIRST</div>
+                        <div class="pf-sub">This order has an <strong>unpaid</strong> balance. Please settle the payment before marking it as completed.</div>
+                    </div>
+                </div>
+
+                <div class="text-center mb-3">
+                    <div class="fw-bold" style="font-size:1.5rem;color:var(--primary)">৳{{ number_format($order->total_amount, 2) }}</div>
+                    <div class="text-muted small">Total Amount Due</div>
+                </div>
+
+                <input type="hidden" name="payment_method" id="pf_method_{{ $order->id }}" value="cash">
+
+                <div class="row g-2 mb-3">
+                    @foreach (['cash' => 'Cash', 'card' => 'Card', 'mobile_banking' => 'Mobile Banking'] as $val => $label)
+                        <div class="col-4">
+                            <div class="method-btn pf-method-btn-{{ $order->id }} {{ $val == 'cash' ? 'selected' : '' }}"
+                                onclick="selectPFMethod({{ $order->id }}, '{{ $val }}')" data-method="{{ $val }}">
+                                <i class="bi {{ $val == 'cash' ? 'bi-cash-coin' : ($val == 'card' ? 'bi-credit-card' : 'bi-phone') }} fs-4 d-block mb-1"
+                                    style="color:var(--primary)"></i>
+                                <div style="font-size:0.8rem;font-weight:600">{{ $label }}</div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Amount Received</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0">৳</span>
+                        <input type="number" name="payment_amount" id="pfAmount_{{ $order->id }}" class="form-control border-start-0 ps-0"
+                            step="0.01" min="{{ $order->total_amount }}" value="{{ $order->total_amount }}" required
+                            oninput="calcPFChange({{ $order->id }}, {{ $order->total_amount }})"
+                            style="font-size:1.2rem;font-weight:bold;color:var(--primary)">
+                    </div>
+                </div>
+                <div class="bg-light rounded p-2 mb-3">
+                    <div class="d-flex justify-content-between small align-items-center">
+                        <span>Change:</span>
+                        <span id="pfChange_{{ $order->id }}" class="fw-bold text-success fs-5">৳0.00</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check2-circle me-1"></i>Pay &amp; Complete Order
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 @endif
 @endforeach
 
@@ -272,6 +393,23 @@ function calcSettleChange(orderId, total) {
     const received = parseFloat(document.getElementById('receivedAmount_' + orderId).value) || 0;
     const change = Math.max(0, received - total);
     document.getElementById('changeAmount_' + orderId).textContent = '৳' + change.toFixed(2);
+}
+
+// Pay-First modal helpers
+function selectPFMethod(orderId, method) {
+    document.getElementById('pf_method_' + orderId).value = method;
+    document.querySelectorAll('.pf-method-btn-' + orderId).forEach(btn => {
+        btn.classList.remove('selected');
+        if (btn.getAttribute('data-method') === method) {
+            btn.classList.add('selected');
+        }
+    });
+}
+
+function calcPFChange(orderId, total) {
+    const received = parseFloat(document.getElementById('pfAmount_' + orderId).value) || 0;
+    const change = Math.max(0, received - total);
+    document.getElementById('pfChange_' + orderId).textContent = '৳' + change.toFixed(2);
 }
 
 // Auto-refresh the orders table every 30 seconds to fetch the latest data
