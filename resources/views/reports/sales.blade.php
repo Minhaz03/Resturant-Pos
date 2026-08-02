@@ -149,6 +149,8 @@
                 },
                 options: {
                     responsive: true,
+                    maintainAspectRatio: false,
+                    aspectRatio: 6,
                     plugins: {
                         legend: {
                             display: false
