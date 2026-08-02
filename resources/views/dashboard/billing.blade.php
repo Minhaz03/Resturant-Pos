@@ -26,25 +26,33 @@
 </div>
 
 <h5 class="fw-bold text-secondary mb-3 mt-2">Available Plans</h5>
-<div class="row g-4 mb-5">
+<div class="row g-4 mb-5 justify-content-center">
     @foreach($plans as $plan)
-    <div class="col-md-4">
-        <div class="card h-100 {{ ($activeSubscription && $activeSubscription->plan_id == $plan->id) ? 'border-primary' : '' }}" style="{{ ($activeSubscription && $activeSubscription->plan_id == $plan->id) ? 'box-shadow: 0 0 0 2px var(--primary);' : '' }}">
+    <div class="col-md-6 col-lg-3">
+        <div class="card h-100 border-0 rounded-4 shadow-sm hover-shadow transition-all {{ ($activeSubscription && $activeSubscription->plan_id == $plan->id) ? 'bg-primary-subtle' : 'bg-white' }}" style="{{ ($activeSubscription && $activeSubscription->plan_id == $plan->id) ? 'box-shadow: 0 0 0 2px var(--bs-primary);' : '' }}">
             <div class="card-body p-4 text-center d-flex flex-column">
-                <h5 class="fw-bold text-secondary mb-3">{{ $plan->name }}</h5>
-                <h2 class="fw-bold mb-0 text-primary">৳{{ number_format($plan->price) }}</h2>
-                <p class="text-muted small mb-4">per {{ $plan->billing_cycle }}</p>
+                <div class="mb-4">
+                    <span class="badge {{ ($activeSubscription && $activeSubscription->plan_id == $plan->id) ? 'bg-primary text-white' : 'bg-light text-primary border' }} px-3 py-2 rounded-pill fw-semibold mb-3 tracking-wide text-uppercase">{{ $plan->name }}</span>
+                    <h2 class="display-6 fw-bolder mb-0 text-dark">৳{{ number_format($plan->price) }}</h2>
+                    <p class="text-muted small mt-1 fw-medium">per {{ $plan->billing_cycle }}</p>
+                </div>
 
-                <p class="text-muted small mb-4" style="min-height: 40px;">{{ $plan->description }}</p>
+                <div class="text-muted small mb-4 flex-grow-1 text-center px-2" style="line-height: 1.6;">
+                    {{ $plan->description }}
+                </div>
                 
                 <div class="mt-auto">
                     @if($activeSubscription && $activeSubscription->plan_id == $plan->id)
-                        <button class="btn btn-outline-primary w-100" disabled>Current Plan</button>
+                        <button class="btn btn-primary w-100 rounded-pill fw-bold py-2 opacity-75" disabled>
+                            <i class="bi bi-check-circle-fill me-2"></i>Current Plan
+                        </button>
                     @else
                         <form action="{{ route('dashboard.billing.subscribe') }}" method="POST">
                             @csrf
                             <input type="hidden" name="plan_id" value="{{ $plan->id }}">
-                            <button type="submit" class="btn btn-primary w-100">Subscribe via SSLCommerz</button>
+                            <button type="submit" class="btn btn-dark w-100 rounded-pill fw-bold py-2 shadow-sm hover-btn-primary">
+                                Purchase
+                            </button>
                         </form>
                     @endif
                 </div>
@@ -53,6 +61,23 @@
     </div>
     @endforeach
 </div>
+
+<style>
+.hover-shadow {
+    transition: all 0.3s ease-in-out;
+}
+.hover-shadow:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,.08)!important;
+}
+.hover-btn-primary {
+    transition: all 0.3s ease-in-out;
+}
+.hover-btn-primary:hover {
+    background-color: var(--bs-primary);
+    border-color: var(--bs-primary);
+}
+</style>
 
 <h5 class="fw-bold text-secondary mb-3">Billing History</h5>
 <div class="card">

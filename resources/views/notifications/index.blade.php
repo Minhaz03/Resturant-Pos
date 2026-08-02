@@ -24,6 +24,9 @@
                     'reservation' => 'bi-calendar-check text-info',
                     'kitchen' => 'bi-fire text-danger',
                     'delivery' => 'bi-truck text-secondary',
+                    'subscription_purchased' => 'bi-credit-card text-success',
+                    'subscription_expired' => 'bi-exclamation-triangle text-danger',
+                    'subscription_warning' => 'bi-clock-history text-warning',
                     default => 'bi-bell text-muted',
                 };
             @endphp

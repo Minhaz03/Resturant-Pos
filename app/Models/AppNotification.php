@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class AppNotification extends Model
 {
-    use \App\Traits\BelongsToTenant;
     protected $table = 'app_notifications';
 
     protected $fillable = [
