@@ -17,7 +17,7 @@ class NotificationController extends Controller
 
     public function unreadCount()
     {
-        $count = AppNotification::where('user_id', auth()->id())->unread()->count();
+        $count = AppNotification::where('user_id', auth()->id())->where('is_read', false)->count();
         return response()->json(['count' => $count]);
     }
 

@@ -20,15 +20,43 @@
             <input type="text" name="name" value="{{ old('name') }}" class="w-full bg-gray-700 border border-gray-600 rounded py-2 px-3 text-white focus:outline-none focus:border-blue-500" required>
         </div>
         <div class="mb-4">
-            <label class="block text-gray-300 text-sm font-bold mb-2">Owner Email</label>
+            <label class="block text-gray-300 text-sm font-bold mb-2">Restaurant Email</label>
+            <input type="email" name="email" value="{{ old('email') }}" class="w-full bg-gray-700 border border-gray-600 rounded py-2 px-3 text-white focus:outline-none focus:border-blue-500">
+        </div>
+        <div class="mb-4">
+            <label class="block text-gray-300 text-sm font-bold mb-2">Restaurant Phone</label>
+            <input type="text" name="phone" value="{{ old('phone') }}" class="w-full bg-gray-700 border border-gray-600 rounded py-2 px-3 text-white focus:outline-none focus:border-blue-500">
+        </div>
+        <div class="mb-4">
+            <label class="block text-gray-300 text-sm font-bold mb-2">Restaurant Address</label>
+            <textarea name="address" class="w-full bg-gray-700 border border-gray-600 rounded py-2 px-3 text-white focus:outline-none focus:border-blue-500" rows="3">{{ old('address') }}</textarea>
+        </div>
+        
+        <hr class="border-gray-600 my-6">
+        
+        <h4 class="text-white font-bold mb-4">Owner Details</h4>
+        <div class="mb-4">
+            <label class="block text-gray-300 text-sm font-bold mb-2">Owner Name <span class="text-red-500">*</span></label>
+            <input type="text" name="owner_name" value="{{ old('owner_name') }}" class="w-full bg-gray-700 border border-gray-600 rounded py-2 px-3 text-white focus:outline-none focus:border-blue-500" required>
+        </div>
+        <div class="mb-4">
+            <label class="block text-gray-300 text-sm font-bold mb-2">Owner Phone <span class="text-red-500">*</span></label>
+            <input type="text" name="owner_phone" value="{{ old('owner_phone') }}" class="w-full bg-gray-700 border border-gray-600 rounded py-2 px-3 text-white focus:outline-none focus:border-blue-500" required>
+        </div>
+        <div class="mb-4">
+            <label class="block text-gray-300 text-sm font-bold mb-2">Owner Email <span class="text-red-500">*</span></label>
             <input type="email" name="owner_email" value="{{ old('owner_email') }}" class="w-full bg-gray-700 border border-gray-600 rounded py-2 px-3 text-white focus:outline-none focus:border-blue-500" required>
         </div>
         <div class="mb-4">
-            <label class="block text-gray-300 text-sm font-bold mb-2">Owner Password</label>
+            <label class="block text-gray-300 text-sm font-bold mb-2">Owner Address <span class="text-red-500">*</span></label>
+            <textarea name="owner_address" class="w-full bg-gray-700 border border-gray-600 rounded py-2 px-3 text-white focus:outline-none focus:border-blue-500" rows="2" required>{{ old('owner_address') }}</textarea>
+        </div>
+        <div class="mb-4">
+            <label class="block text-gray-300 text-sm font-bold mb-2">Owner Password <span class="text-red-500">*</span></label>
             <input type="password" name="owner_password" class="w-full bg-gray-700 border border-gray-600 rounded py-2 px-3 text-white focus:outline-none focus:border-blue-500" required>
         </div>
         <div class="mb-4">
-            <label class="block text-gray-300 text-sm font-bold mb-2">Confirm Password</label>
+            <label class="block text-gray-300 text-sm font-bold mb-2">Confirm Password <span class="text-red-500">*</span></label>
             <input type="password" name="owner_password_confirmation" class="w-full bg-gray-700 border border-gray-600 rounded py-2 px-3 text-white focus:outline-none focus:border-blue-500" required>
         </div>
         <div class="mb-4">

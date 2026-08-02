@@ -21,7 +21,7 @@
         <div class="card h-100">
             <div class="card-header fw-semibold"><i class="bi bi-person-circle me-2"></i>Account Information</div>
             <div class="card-body">
-                <form method="POST" action="{{ route('profile.update') }}">
+                <form method="POST" action="{{ route('profile.update') }}" enctype="multipart/form-data">
                     @csrf @method('PATCH')
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Name <span class="text-danger">*</span></label>
@@ -37,6 +37,33 @@
                         @if($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && !$user->hasVerifiedEmail())
                             <div class="form-text text-warning"><i class="bi bi-exclamation-triangle me-1"></i>Email not verified.</div>
                         @endif
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Phone Number</label>
+                        <input type="text" name="phone" class="form-control @error('phone') is-invalid @enderror"
+                            value="{{ old('phone', $user->phone) }}">
+                        @error('phone')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Address</label>
+                        <textarea name="address" class="form-control @error('address') is-invalid @enderror" rows="2">{{ old('address', $user->address) }}</textarea>
+                        @error('address')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">National ID (NID)</label>
+                        <input type="text" name="nid" class="form-control @error('nid') is-invalid @enderror"
+                            value="{{ old('nid', $user->nid) }}">
+                        @error('nid')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Profile Photo (Avatar)</label>
+                        <input type="file" name="avatar" class="form-control @error('avatar') is-invalid @enderror" accept="image/*">
+                        @error('avatar')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">NID Photo Document</label>
+                        <input type="file" name="nid_photo" class="form-control @error('nid_photo') is-invalid @enderror" accept="image/*">
+                        @error('nid_photo')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Role</label>

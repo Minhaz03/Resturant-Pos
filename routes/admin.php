@@ -22,5 +22,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         
         Route::get('settings', [\App\Http\Controllers\Admin\SettingController::class, 'index'])->name('settings.index');
         Route::post('settings', [\App\Http\Controllers\Admin\SettingController::class, 'store'])->name('settings.store');
+        
+        Route::get('notifications', [DashboardController::class, 'notifications'])->name('notifications.index');
+        Route::post('notifications/read', [DashboardController::class, 'markNotificationsAsRead'])->name('notifications.read');
     });
 });

@@ -84,6 +84,23 @@ class BillingController extends Controller
                 'ends_at' => $endsAt,
             ]);
 
+            // Notify Super Admin
+            \Illuminate\Support\Facades\Notification::send(\App\Models\Admin::all(), new \App\Notifications\SubscriptionPurchasedNotification($subscription));
+            
+            // Notify Owner
+            $owner = $subscription->tenant->users()->first();
+            if ($owner) {
+                \App\Models\AppNotification::create([
+                    'user_id' => $owner->id,
+                    'type' => 'subscription_purchased',
+                    'title' => 'Subscription Activated',
+                    'message' => 'Your subscription for ' . $subscription->plan->name . ' has been activated.',
+                    'icon' => 'bi bi-check-circle',
+                    'color' => 'success',
+                    'action_url' => route('dashboard.billing'),
+                ]);
+            }
+
             return redirect()->route('dashboard.billing')->with('success', 'Payment successful! Subscription activated.');
         }
 
@@ -148,6 +165,23 @@ class BillingController extends Controller
                 'starts_at' => now(),
                 'ends_at' => $endsAt,
             ]);
+
+            // Notify Super Admin
+            \Illuminate\Support\Facades\Notification::send(\App\Models\Admin::all(), new \App\Notifications\SubscriptionPurchasedNotification($subscription));
+            
+            // Notify Owner
+            $owner = $subscription->tenant->users()->first();
+            if ($owner) {
+                \App\Models\AppNotification::create([
+                    'user_id' => $owner->id,
+                    'type' => 'subscription_purchased',
+                    'title' => 'Subscription Activated',
+                    'message' => 'Your subscription for ' . $subscription->plan->name . ' has been activated.',
+                    'icon' => 'bi bi-check-circle',
+                    'color' => 'success',
+                    'action_url' => route('dashboard.billing'),
+                ]);
+            }
 
             return response()->json(['status' => 'success']);
         }

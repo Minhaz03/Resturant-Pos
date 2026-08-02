@@ -55,6 +55,10 @@ class PlanController extends Controller
 
     public function destroy(\App\Models\Plan $plan)
     {
+        if ($plan->subscriptions()->exists()) {
+            return redirect()->route('admin.plans.index')->with('error', 'Cannot delete plan because it is in use by one or more subscriptions.');
+        }
+
         $plan->delete();
         return redirect()->route('admin.plans.index')->with('success', 'Plan deleted successfully.');
     }

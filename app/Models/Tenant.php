@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Tenant extends Model
 {
-    protected $fillable = ['name', 'subdomain', 'is_active'];
+    protected $fillable = ['name', 'subdomain', 'is_active', 'email', 'phone', 'address'];
 
     public function subscriptions()
     {
@@ -16,5 +16,10 @@ class Tenant extends Model
     public function currentSubscription()
     {
         return $this->hasOne(Subscription::class)->latestOfMany();
+    }
+
+    public function users()
+    {
+        return $this->hasMany(User::class);
     }
 }

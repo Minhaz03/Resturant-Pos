@@ -560,10 +560,34 @@
             </button>
             <span class="topbar-title d-none d-sm-block">@yield('title', 'Dashboard')</span>
             <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
-                <a href="{{ route('notifications.index') }}" class="icon-btn" id="notifBtn">
-                    <i class="bi bi-bell fs-5"></i>
-                    <span class="notif-dot d-none" id="notifCount">0</span>
-                </a>
+                <div class="dropdown">
+                    <button class="icon-btn" data-bs-toggle="dropdown" id="notifBtn" style="border:none" data-bs-auto-close="outside" aria-expanded="false">
+                        <i class="bi bi-bell fs-5"></i>
+                        <span class="notif-dot d-none" id="notifCount">0</span>
+                    </button>
+                    @php
+                        $latestNotifs = auth()->user()->notifications()->take(5)->get();
+                    @endphp
+                    <div class="dropdown-menu dropdown-menu-end shadow border-0" style="width: 320px; padding: 0; overflow: hidden; border-radius: 12px; margin-top: 8px;">
+                        <div class="bg-light px-3 py-2 border-bottom d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0 fw-bold" style="font-size: 0.9rem; color: var(--secondary);">Notifications</h6>
+                        </div>
+                        <div style="max-height: 300px; overflow-y: auto;">
+                            @forelse($latestNotifs as $notification)
+                                <a href="{{ route('notifications.index') }}" class="dropdown-item py-2 px-3 border-bottom text-wrap {{ is_null($notification->read_at) ? 'bg-light' : '' }}">
+                                    <div class="fw-semibold text-dark" style="font-size: 0.85rem;">{{ $notification->data['title'] ?? 'Notification' }}</div>
+                                    <div class="text-muted" style="font-size: 0.75rem;">{{ Str::limit($notification->data['message'] ?? '', 80) }}</div>
+                                    <div class="text-muted mt-1" style="font-size: 0.7rem;"><i class="bi bi-clock me-1"></i>{{ $notification->created_at->diffForHumans() }}</div>
+                                </a>
+                            @empty
+                                <div class="p-3 text-center text-muted" style="font-size: 0.85rem;">No notifications yet.</div>
+                            @endforelse
+                        </div>
+                        <div class="text-center p-2 bg-light border-top">
+                            <a href="{{ route('notifications.index') }}" class="text-decoration-none fw-semibold" style="font-size: 0.8rem; color: var(--primary);">View All Notifications</a>
+                        </div>
+                    </div>
+                </div>
                 <div class="dropdown">
                     <button style="background:none;border:none;padding:0;cursor:pointer" data-bs-toggle="dropdown">
                         <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold"
@@ -592,6 +616,28 @@
                 </div>
             </div>
         </div>
+
+        @php
+            $isTrialing = false;
+            $daysLeft = 0;
+            if(auth()->check() && auth()->user()->tenant) {
+                $currentSub = auth()->user()->tenant->currentSubscription;
+                if($currentSub && $currentSub->status === 'trialing') {
+                    $isTrialing = true;
+                    if ($currentSub->ends_at) {
+                        $daysLeft = max(0, (int) ceil(now()->diffInDays(\Carbon\Carbon::parse($currentSub->ends_at), false)));
+                    }
+                }
+            }
+        @endphp
+
+        @if($isTrialing)
+        <div class="bg-grad-warning text-white px-4 py-2 text-center text-sm fw-semibold d-flex align-items-center justify-content-center gap-2 shadow-sm">
+            <i class="bi bi-clock-history fs-6"></i>
+            <span>Your workspace is currently on a free trial. You have <strong>{{ $daysLeft }}</strong> days left.</span>
+            <a href="{{ route('dashboard.billing') }}" class="text-white text-decoration-underline ms-2">Upgrade Now</a>
+        </div>
+        @endif
 
         <div class="page-content">
             @if (session('success'))

@@ -45,7 +45,7 @@
                             </li>
                         </ul>
 
-                        <a href="{{ url('/#register') }}"
+                        <a href="{{ url('/#register') }}" onclick="if(document.getElementById('plan_id')) document.getElementById('plan_id').value = '{{ $plan->id }}';"
                             class="w-full block text-center bg-brand-red hover:bg-brand-redDark text-white font-bold py-3 px-4 rounded-xl shadow-lg shadow-red-900/10 hover:shadow-red-900/20 transition-all duration-200">
                             Get Started
                         </a>

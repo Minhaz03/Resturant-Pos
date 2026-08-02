@@ -13,9 +13,12 @@ class SslCommerzService
 
     public function __construct()
     {
-        $this->storeId = config('sslcommerz.store_id');
-        $this->storePassword = config('sslcommerz.store_password');
-        $this->apiDomain = config('sslcommerz.api_domain');
+        $settings = \App\Models\AdminSetting::whereIn('key', ['sslcommerz_store_id', 'sslcommerz_store_password', 'sslcommerz_api_domain'])
+            ->pluck('value', 'key');
+
+        $this->storeId = $settings['sslcommerz_store_id'] ?? config('sslcommerz.store_id');
+        $this->storePassword = $settings['sslcommerz_store_password'] ?? config('sslcommerz.store_password');
+        $this->apiDomain = $settings['sslcommerz_api_domain'] ?? config('sslcommerz.api_domain');
     }
 
     /**
