@@ -505,6 +505,12 @@
             @endcan
 
         <div class="nav-section-title">Finance & Reports</div>
+        <a href="{{ route('expenses.index') }}" class="sidebar-link {{ request()->routeIs('expenses.*') ? 'active' : '' }}">
+            <i class="bi bi-cash-coin"></i><span>Expenses</span>
+        </a>
+        <a href="{{ route('expense-categories.index') }}" class="sidebar-link {{ request()->routeIs('expense-categories.*') ? 'active' : '' }}">
+            <i class="bi bi-tags"></i><span>Expense Categories</span>
+        </a>
         @can('view coupons')
         <a href="{{ route('coupons.index') }}" class="sidebar-link {{ request()->routeIs('coupons.*') ? 'active' : '' }}">
             <i class="bi bi-percent"></i><span>Coupons</span>
@@ -566,7 +572,7 @@
                         <span class="notif-dot d-none" id="notifCount">0</span>
                     </button>
                     @php
-                        $latestNotifs = auth()->user()->notifications()->take(5)->get();
+                        $latestNotifs = auth()->user()->appNotifications()->latest()->take(5)->get();
                     @endphp
                     <div class="dropdown-menu dropdown-menu-end shadow border-0" style="width: 320px; padding: 0; overflow: hidden; border-radius: 12px; margin-top: 8px;">
                         <div class="bg-light px-3 py-2 border-bottom d-flex justify-content-between align-items-center">
@@ -575,8 +581,13 @@
                         <div style="max-height: 300px; overflow-y: auto;">
                             @forelse($latestNotifs as $notification)
                                 <a href="{{ route('notifications.index') }}" class="dropdown-item py-2 px-3 border-bottom text-wrap {{ is_null($notification->read_at) ? 'bg-light' : '' }}">
-                                    <div class="fw-semibold text-dark" style="font-size: 0.85rem;">{{ $notification->data['title'] ?? 'Notification' }}</div>
-                                    <div class="text-muted" style="font-size: 0.75rem;">{{ Str::limit($notification->data['message'] ?? '', 80) }}</div>
+                                    <div class="fw-semibold text-dark" style="font-size: 0.85rem;">
+                                        @if($notification->icon)
+                                            <i class="{{ $notification->icon }} text-{{ $notification->color ?? 'primary' }} me-1"></i>
+                                        @endif
+                                        {{ $notification->title ?? 'Notification' }}
+                                    </div>
+                                    <div class="text-muted" style="font-size: 0.75rem;">{{ Str::limit($notification->message ?? '', 80) }}</div>
                                     <div class="text-muted mt-1" style="font-size: 0.7rem;"><i class="bi bi-clock me-1"></i>{{ $notification->created_at->diffForHumans() }}</div>
                                 </a>
                             @empty

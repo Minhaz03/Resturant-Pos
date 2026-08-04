@@ -63,6 +63,13 @@ class BillingController extends Controller
 
         $subscription = Subscription::where('transaction_id', $tranId)->with('plan')->first();
 
+        if ($subscription) {
+            $owner = $subscription->tenant->users()->first();
+            if ($owner) {
+                \Illuminate\Support\Facades\Auth::login($owner);
+            }
+        }
+
         if (!$subscription || $subscription->status !== 'pending') {
             return redirect()->route('dashboard.billing')->with('error', 'Invalid transaction.');
         }
@@ -112,8 +119,15 @@ class BillingController extends Controller
         $tranId = $request->input('tran_id');
         $subscription = Subscription::where('transaction_id', $tranId)->first();
 
-        if ($subscription && $subscription->status === 'pending') {
-            $subscription->update(['status' => 'canceled']);
+        if ($subscription) {
+            $owner = $subscription->tenant->users()->first();
+            if ($owner) {
+                \Illuminate\Support\Facades\Auth::login($owner);
+            }
+
+            if ($subscription->status === 'pending') {
+                $subscription->update(['status' => 'canceled']);
+            }
         }
 
         return redirect()->route('dashboard.billing')->with('error', 'Payment failed.');
@@ -124,8 +138,15 @@ class BillingController extends Controller
         $tranId = $request->input('tran_id');
         $subscription = Subscription::where('transaction_id', $tranId)->first();
 
-        if ($subscription && $subscription->status === 'pending') {
-            $subscription->update(['status' => 'canceled']);
+        if ($subscription) {
+            $owner = $subscription->tenant->users()->first();
+            if ($owner) {
+                \Illuminate\Support\Facades\Auth::login($owner);
+            }
+
+            if ($subscription->status === 'pending') {
+                $subscription->update(['status' => 'canceled']);
+            }
         }
 
         return redirect()->route('dashboard.billing')->with('warning', 'Payment cancelled.');

@@ -34,6 +34,12 @@ Route::get('/pricing', function () {
 
 Route::post('/register-tenant', [\App\Http\Controllers\Central\TenantRegistrationController::class, 'store'])->name('tenant.register');
 
+// Payment Callbacks (Outside Auth)
+Route::post('/billing/payment/success', [\App\Http\Controllers\BillingController::class, 'paymentSuccess'])->name('dashboard.billing.payment.success');
+Route::post('/billing/payment/fail', [\App\Http\Controllers\BillingController::class, 'paymentFail'])->name('dashboard.billing.payment.fail');
+Route::post('/billing/payment/cancel', [\App\Http\Controllers\BillingController::class, 'paymentCancel'])->name('dashboard.billing.payment.cancel');
+Route::post('/billing/payment/ipn', [\App\Http\Controllers\BillingController::class, 'paymentIpn'])->name('dashboard.billing.payment.ipn');
+
 Route::middleware(['tenant', 'auth', 'verified'])->group(function () {
 
     // Dashboard
@@ -42,10 +48,6 @@ Route::middleware(['tenant', 'auth', 'verified'])->group(function () {
     // Billing & Subscription
     Route::get('/billing', [\App\Http\Controllers\BillingController::class, 'index'])->name('dashboard.billing');
     Route::post('/billing/subscribe', [\App\Http\Controllers\BillingController::class, 'subscribe'])->name('dashboard.billing.subscribe');
-    Route::post('/billing/payment/success', [\App\Http\Controllers\BillingController::class, 'paymentSuccess'])->name('dashboard.billing.payment.success');
-    Route::post('/billing/payment/fail', [\App\Http\Controllers\BillingController::class, 'paymentFail'])->name('dashboard.billing.payment.fail');
-    Route::post('/billing/payment/cancel', [\App\Http\Controllers\BillingController::class, 'paymentCancel'])->name('dashboard.billing.payment.cancel');
-    Route::post('/billing/payment/ipn', [\App\Http\Controllers\BillingController::class, 'paymentIpn'])->name('dashboard.billing.payment.ipn');
 
     // Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -138,6 +140,10 @@ Route::middleware(['tenant', 'auth', 'verified'])->group(function () {
 
     // Users (Admin)
     Route::resource('users', UserController::class)->except(['show']);
+
+    // Expenses
+    Route::resource('expense-categories', \App\Http\Controllers\ExpenseCategoryController::class);
+    Route::resource('expenses', \App\Http\Controllers\ExpenseController::class);
 
     // Notifications
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
