@@ -7,10 +7,29 @@ use Illuminate\Http\Request;
 
 class SubscriptionController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $subscriptions = \App\Models\Subscription::with(['tenant', 'plan'])->latest()->paginate(15);
-        return view('admin.subscriptions.index', compact('subscriptions'));
+        $query = \App\Models\Subscription::with(['tenant', 'plan'])->latest();
+
+        if ($request->filled('transaction_id')) {
+            $query->where('transaction_id', 'like', '%' . $request->transaction_id . '%');
+        }
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        if ($request->filled('plan_id')) {
+            $query->where('plan_id', $request->plan_id);
+        }
+        if ($request->filled('tenant_id')) {
+            $query->where('tenant_id', $request->tenant_id);
+        }
+
+        $subscriptions = $query->paginate(15)->withQueryString();
+        
+        $tenants = \App\Models\Tenant::all();
+        $plans = \App\Models\Plan::all();
+
+        return view('admin.subscriptions.index', compact('subscriptions', 'tenants', 'plans'));
     }
 
     public function create()
@@ -55,6 +74,11 @@ class SubscriptionController extends Controller
         $subscription->update($data);
 
         return redirect()->route('admin.subscriptions.index')->with('success', 'Subscription updated successfully.');
+    }
+
+    public function show(\App\Models\Subscription $subscription)
+    {
+        return view('admin.subscriptions.show', compact('subscription'));
     }
 
     public function destroy(\App\Models\Subscription $subscription)
