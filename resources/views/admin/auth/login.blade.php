@@ -32,7 +32,7 @@
         }
     </script>
     <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
     <style>
         @keyframes pulseGlow {
             0%, 100% { opacity: 0.4; transform: scale(1); }

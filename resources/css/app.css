@@ -1,3 +1,14 @@
+@import 'bootstrap/dist/css/bootstrap.min.css';
+@import 'bootstrap-icons/font/bootstrap-icons.css';
+@import 'select2/dist/css/select2.min.css';
+@import 'select2-bootstrap-5-theme/dist/select2-bootstrap-5-theme.min.css';
+@import 'filepond/dist/filepond.min.css';
+@import 'filepond-plugin-image-preview/dist/filepond-plugin-image-preview.min.css';
+
+@import '@fontsource/inter';
+@import '@fontsource/outfit';
+@import '@fontsource/instrument-sans';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
