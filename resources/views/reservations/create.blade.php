@@ -186,7 +186,7 @@
 
 
 <script>
-    $(document).ready(function() {
+    document.addEventListener('DOMContentLoaded', function() {
         $('.select2-multiple').select2({
             theme: 'bootstrap-5',
             placeholder: "Select tables"

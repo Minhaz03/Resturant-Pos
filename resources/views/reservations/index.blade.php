@@ -211,7 +211,7 @@
 
 
     <script>
-        $(document).ready(function() {
+        document.addEventListener('DOMContentLoaded', function() {
             $('#edit_table_ids').select2({
                 theme: 'bootstrap-5',
                 placeholder: "Select tables",

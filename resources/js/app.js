@@ -5,12 +5,14 @@ window.Alpine = Alpine;
 Alpine.start();
 
 // Import local dependencies
-import 'bootstrap';
+import * as bootstrap from 'bootstrap';
+window.bootstrap = bootstrap;
 
 import jQuery from 'jquery';
 window.$ = window.jQuery = jQuery;
 
-import 'select2';
+import select2 from 'select2';
+select2();
 
 import * as FilePond from 'filepond';
 window.FilePond = FilePond;

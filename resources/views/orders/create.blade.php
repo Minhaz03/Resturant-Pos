@@ -95,7 +95,7 @@
 
 
 <script>
-$(document).ready(function() {
+document.addEventListener('DOMContentLoaded', function() {
     $('.table-select2').select2({
         theme: 'bootstrap-5',
         placeholder: "Select Table(s)",

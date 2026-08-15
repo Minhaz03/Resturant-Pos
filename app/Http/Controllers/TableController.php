@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Table;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class TableController extends Controller
 {
@@ -26,8 +27,16 @@ class TableController extends Controller
 
     public function store(Request $request)
     {
+        $tenantId = app()->has('tenant') ? app('tenant')->id : (session('tenant_id') ?? auth()->user()?->tenant_id);
+
         $data = $request->validate([
-            'table_number' => 'required|string|unique:tables',
+            'table_number' => [
+                'required',
+                'string',
+                Rule::unique('tables', 'table_number')->where(function ($query) use ($tenantId) {
+                    return $query->where('tenant_id', $tenantId);
+                }),
+            ],
             'name' => 'nullable|string|max:100',
             'capacity' => 'required|integer|min:1|max:50',
             'location' => 'nullable|string|max:100',
@@ -44,8 +53,16 @@ class TableController extends Controller
 
     public function update(Request $request, Table $table)
     {
+        $tenantId = $table->tenant_id ?? (app()->has('tenant') ? app('tenant')->id : (session('tenant_id') ?? auth()->user()?->tenant_id));
+
         $data = $request->validate([
-            'table_number' => 'required|string|unique:tables,table_number,' . $table->id,
+            'table_number' => [
+                'required',
+                'string',
+                Rule::unique('tables', 'table_number')->where(function ($query) use ($tenantId) {
+                    return $query->where('tenant_id', $tenantId);
+                })->ignore($table->id),
+            ],
             'name' => 'nullable|string|max:100',
             'capacity' => 'required|integer|min:1|max:50',
             'location' => 'nullable|string|max:100',

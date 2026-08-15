@@ -502,8 +502,7 @@
         }
     </style>
 
-    <link rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+   
 @endpush
 @section('content')
     <div class="pos-layout">
@@ -803,7 +802,7 @@
 @endsection
 
 {{-- Hidden Thermal Receipt Block --}}
-<div id="receipt-print">
+<div id="receipt-print" style="display: none;">
     <div style="text-align:center;margin-bottom:8px">
         <strong style="font-size:14px" id="rp-name">{{ $setting->name ?? config('app.name') }}</strong><br>
         <small id="rp-address">{{ $setting->address ?? '' }}</small><br>
@@ -859,7 +858,7 @@
 
 
     <script>
-        $(document).ready(function() {
+        document.addEventListener('DOMContentLoaded', function() {
             function formatTableOption(state) {
                 if (!state.id) {
                     return state.text;
@@ -949,7 +948,6 @@
             }
 
             $('.pos-table-select').select2({
-                theme: 'bootstrap-5',
                 placeholder: "Select Table(s)",
                 allowClear: true,
                 width: '100%',
