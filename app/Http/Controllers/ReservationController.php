@@ -58,6 +58,12 @@ class ReservationController extends Controller
         return redirect()->route('reservations.index')->with('success', 'Reservation #' . $data['reservation_number'] . ' created.');
     }
 
+    public function show(Reservation $reservation)
+    {
+        $reservation->load(['tables', 'customer']);
+        return view('reservations.show', compact('reservation'));
+    }
+
     public function edit(Reservation $reservation)
     {
         $tables = Table::orderBy('table_number')->get();

@@ -15,6 +15,7 @@ use App\Models\Invoice;
 use App\Models\DeliveryOrder;
 use App\Models\RestaurantSetting;
 use App\Models\Reservation;
+use App\Models\InventoryTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -23,8 +24,8 @@ class POSController extends Controller
     public function index()
     {
         $categories = Category::with('activeMenuItems')->where('status', true)->orderBy('sort_order')->get();
-        $tables = Table::all()->sortBy('table_number');
-        $customers = Customer::where('status', 'active')->orderBy('name')->get();
+        $tables = Table::orderBy('table_number')->get();
+        $customers = Customer::orderBy('name')->get();
         $riders = \App\Models\User::role('delivery_staff')->where('status', 'active')->get();
         $setting = RestaurantSetting::first();
         return view('pos.index', compact('categories', 'tables', 'customers', 'riders', 'setting'));
@@ -49,7 +50,7 @@ class POSController extends Controller
             $subtotal = 0; $taxAmount = 0; $items = [];
 
             foreach ($request->items as $item) {
-                $menuItem = MenuItem::findOrFail($item['menu_item_id']);
+                $menuItem = MenuItem::with('ingredients.inventoryItem')->findOrFail($item['menu_item_id']);
                 $price = $menuItem->effective_price;
                 $qty = $item['quantity'];
                 $tax = round($price * $qty * $menuItem->tax_rate / 100, 2);
@@ -62,6 +63,29 @@ class POSController extends Controller
                     'tax_rate' => $menuItem->tax_rate, 'tax_amount' => $tax,
                     'subtotal' => $itemSubtotal + $tax, 'status' => 'pending',
                 ];
+
+                // Automatically deduct stock for linked recipe ingredients
+                foreach ($menuItem->ingredients as $ingredient) {
+                    $invItem = $ingredient->inventoryItem;
+                    if ($invItem && $invItem->track_inventory) {
+                        $usedQty = $ingredient->quantity * $qty;
+                        $newBalance = max(0, $invItem->quantity - $usedQty);
+                        $invItem->update([
+                            'quantity' => $newBalance,
+                            'total_value' => $newBalance * $invItem->unit_cost,
+                        ]);
+                        InventoryTransaction::create([
+                            'inventory_item_id' => $invItem->id,
+                            'type'              => 'usage',
+                            'quantity'          => -$usedQty,
+                            'unit_cost'         => $invItem->unit_cost,
+                            'total_cost'        => $usedQty * $invItem->unit_cost,
+                            'balance_after'     => $newBalance,
+                            'notes'             => "POS Order deduction for {$menuItem->name} (Qty: {$qty})",
+                            'created_by'        => auth()->id(),
+                        ]);
+                    }
+                }
             }
 
             $couponDiscount = 0;

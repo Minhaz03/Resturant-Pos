@@ -44,10 +44,52 @@
                     @if($menuItem->is_featured)<div class="col-auto"><span class="badge bg-warning text-dark"><i class="bi bi-star-fill me-1"></i>Featured</span></div>@endif
                     @if($menuItem->barcode)<div class="col-auto"><span class="badge bg-light text-dark">Barcode: {{ $menuItem->barcode }}</span></div>@endif
                 </div>
-                @if($menuItem->allergens || $menuItem->ingredients)
+                @if($menuItem->allergens)
                 <hr>
-                @if($menuItem->ingredients)<div class="mb-2"><small class="text-muted fw-semibold d-block">Ingredients</small>{{ $menuItem->ingredients }}</div>@endif
-                @if($menuItem->allergens)<div><small class="text-muted fw-semibold d-block">Allergens</small>{{ $menuItem->allergens }}</div>@endif
+                <div><small class="text-muted fw-semibold d-block">Allergens</small>{{ $menuItem->allergens }}</div>
+                @endif
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header fw-semibold d-flex align-items-center gap-2">
+                <i class="bi bi-box-seam"></i> Recipe Ingredients & Stock Usage
+            </div>
+            <div class="card-body p-0">
+                @if($menuItem->ingredients->isNotEmpty())
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light">
+                                <tr style="font-size:0.8rem">
+                                    <th>Inventory Item</th>
+                                    <th>Category</th>
+                                    <th>Usage Qty</th>
+                                    <th>Available Stock</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($menuItem->ingredients as $ing)
+                                    <tr>
+                                        <td>
+                                            <div class="fw-semibold">{{ $ing->inventoryItem?->name ?? 'Deleted Item' }}</div>
+                                            <small class="text-muted">SKU: {{ $ing->inventoryItem?->sku ?? '—' }}</small>
+                                        </td>
+                                        <td><span class="badge bg-light text-dark">{{ $ing->inventoryItem?->category ?? 'General' }}</span></td>
+                                        <td><span class="badge bg-primary">{{ (float)$ing->quantity }} {{ $ing->inventoryItem?->unit }}</span></td>
+                                        <td>
+                                            <span class="fw-semibold {{ ($ing->inventoryItem?->quantity ?? 0) <= ($ing->inventoryItem?->min_quantity ?? 0) ? 'text-danger' : 'text-success' }}">
+                                                {{ $ing->inventoryItem?->quantity ?? 0 }} {{ $ing->inventoryItem?->unit }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @else
+                    <div class="p-3 text-muted small text-center">
+                        <i class="bi bi-info-circle me-1"></i>No recipe ingredients attached to this menu item.
+                    </div>
                 @endif
             </div>
         </div>

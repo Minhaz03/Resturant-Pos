@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\MenuItem;
 use App\Models\Category;
+use App\Models\InventoryItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
@@ -24,7 +25,8 @@ class MenuItemController extends Controller
     public function create()
     {
         $categories = Category::where('status', true)->orderBy('sort_order')->get();
-        return view('menu.create', compact('categories'));
+        $inventoryItems = InventoryItem::where('status', 'active')->orderBy('name')->get();
+        return view('menu.create', compact('categories', 'inventoryItems'));
     }
 
     public function store(Request $request)
@@ -43,6 +45,9 @@ class MenuItemController extends Controller
             'sort_order'  => 'nullable|integer',
             'sku'         => 'nullable|string|unique:menu_items',
             'barcode'     => 'nullable|string|unique:menu_items',
+            'ingredients' => 'nullable|array',
+            'ingredients.*.inventory_item_id' => 'nullable|exists:inventory_items,id',
+            'ingredients.*.quantity' => 'nullable|numeric|min:0.001',
         ]);
 
         $data['slug']         = Str::slug($data['name'] . '-' . uniqid());
@@ -50,8 +55,8 @@ class MenuItemController extends Controller
         $data['is_featured']  = $request->boolean('is_featured', false);
         $data['status']       = $request->boolean('status', true);
 
-        // Remove image from fillable data — Spatie handles it separately
-        unset($data['image']);
+        // Remove image & ingredients array from fillable data
+        unset($data['image'], $data['ingredients']);
 
         $menuItem = MenuItem::create($data);
 
@@ -60,20 +65,32 @@ class MenuItemController extends Controller
                      ->toMediaCollection('image');
         }
 
+        if ($request->has('ingredients')) {
+            foreach ($request->ingredients as $ing) {
+                if (!empty($ing['inventory_item_id']) && !empty($ing['quantity'])) {
+                    $menuItem->ingredients()->create([
+                        'inventory_item_id' => $ing['inventory_item_id'],
+                        'quantity'          => $ing['quantity'],
+                    ]);
+                }
+            }
+        }
+
         return redirect()->route('menu.index')->with('success', 'Menu item created successfully.');
     }
 
     public function show(MenuItem $menu)
     {
-        $menuItem = $menu;
+        $menuItem = $menu->load(['category', 'ingredients.inventoryItem']);
         return view('menu.show', compact('menuItem'));
     }
 
     public function edit(MenuItem $menu)
     {
-        $menuItem   = $menu;
+        $menuItem   = $menu->load('ingredients.inventoryItem');
         $categories = Category::where('status', true)->orderBy('sort_order')->get();
-        return view('menu.edit', compact('menuItem', 'categories'));
+        $inventoryItems = InventoryItem::where('status', 'active')->orderBy('name')->get();
+        return view('menu.edit', compact('menuItem', 'categories', 'inventoryItems'));
     }
 
     public function update(Request $request, MenuItem $menu)
@@ -93,14 +110,17 @@ class MenuItemController extends Controller
             'sort_order'  => 'nullable|integer',
             'sku'         => 'nullable|string|unique:menu_items,sku,' . $menuItem->id,
             'barcode'     => 'nullable|string|unique:menu_items,barcode,' . $menuItem->id,
+            'ingredients' => 'nullable|array',
+            'ingredients.*.inventory_item_id' => 'nullable|exists:inventory_items,id',
+            'ingredients.*.quantity' => 'nullable|numeric|min:0.001',
         ]);
 
         $data['is_available'] = $request->boolean('is_available', true);
         $data['is_featured']  = $request->boolean('is_featured', false);
         $data['status']       = $request->boolean('status', true);
 
-        // Remove image from fillable data — Spatie handles it separately
-        unset($data['image']);
+        // Remove image & ingredients from fillable data
+        unset($data['image'], $data['ingredients']);
 
         $menuItem->update($data);
 
@@ -114,6 +134,19 @@ class MenuItemController extends Controller
         if ($request->input('remove_image') == '1') {
             $menuItem->clearMediaCollection('image');
             $menuItem->update(['image' => null]);
+        }
+
+        // Sync ingredients
+        $menuItem->ingredients()->delete();
+        if ($request->has('ingredients')) {
+            foreach ($request->ingredients as $ing) {
+                if (!empty($ing['inventory_item_id']) && !empty($ing['quantity'])) {
+                    $menuItem->ingredients()->create([
+                        'inventory_item_id' => $ing['inventory_item_id'],
+                        'quantity'          => $ing['quantity'],
+                    ]);
+                }
+            }
         }
 
         return redirect()->route('menu.index')->with('success', 'Menu item updated successfully.');
