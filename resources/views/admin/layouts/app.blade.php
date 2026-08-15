@@ -80,6 +80,11 @@
                         <i class="bi bi-gear text-base {{ request()->routeIs('admin.settings.*') ? 'text-blue-400' : 'text-slate-400' }}"></i>
                         <span>System Settings</span>
                     </a>
+
+                    <a href="{{ route('admin.tickets.index') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 {{ request()->routeIs('admin.tickets.*') ? 'bg-gradient-to-r from-blue-600/20 to-indigo-600/10 text-blue-400 border-l-4 border-blue-500 shadow-inner' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60' }}">
+                        <i class="bi bi-headset text-base {{ request()->routeIs('admin.tickets.*') ? 'text-blue-400' : 'text-slate-400' }}"></i>
+                        <span>Support Tickets</span>
+                    </a>
                 </nav>
             </div>
 

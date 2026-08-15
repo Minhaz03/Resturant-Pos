@@ -535,6 +535,9 @@
                     <i class="bi bi-credit-card"></i><span>Subscription</span>
                 </a>
             @endcan
+            <a href="{{ route('tickets.index') }}" class="sidebar-link {{ request()->routeIs('tickets.*') ? 'active' : '' }}">
+                <i class="bi bi-headset"></i><span>Support Tickets</span>
+            </a>
         </div>
 
         <div class="sidebar-footer">
