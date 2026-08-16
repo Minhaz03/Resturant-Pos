@@ -13,6 +13,53 @@
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
+    <!-- Flatpickr -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <style>
+        /* Flatpickr overrides to match app theme */
+        .flatpickr-calendar {
+            font-family: 'Inter', sans-serif;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,.15);
+            border: 1px solid #e2e8f0;
+        }
+        .flatpickr-day.selected,
+        .flatpickr-day.selected:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+        .flatpickr-day:hover {
+            background: #fef2f2;
+            border-color: transparent;
+        }
+        .flatpickr-months .flatpickr-month {
+            background: var(--primary);
+            border-radius: 12px 12px 0 0;
+            color: #fff;
+        }
+        .flatpickr-current-month .flatpickr-monthDropdown-months,
+        .flatpickr-current-month input.cur-year {
+            color: #fff;
+        }
+        .flatpickr-weekday {
+            color: var(--primary);
+            font-weight: 600;
+        }
+        .flatpickr-day.today {
+            border-color: var(--primary);
+        }
+        .numInputWrapper span.arrowUp:after {
+            border-bottom-color: #fff;
+        }
+        .numInputWrapper span.arrowDown:after {
+            border-top-color: #fff;
+        }
+        .flatpickr-months .flatpickr-prev-month:hover svg,
+        .flatpickr-months .flatpickr-next-month:hover svg {
+            fill: var(--accent);
+        }
+    </style>
+
     <style>
         :root {
             --primary: #8B0000;
@@ -794,6 +841,34 @@
                 } catch (e) {}
             });
         }, 5000);
+    </script>
+    <!-- Flatpickr JS -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('input[type="date"]').forEach(function (input) {
+                // Preserve existing value
+                var currentVal = input.value || '';
+                // Read min attribute if set
+                var minDate = input.getAttribute('min') || null;
+                // Detect if there was an onchange that submits the form
+                var onchangeAttr = input.getAttribute('onchange') || '';
+                var autoSubmit = onchangeAttr.includes('this.form.submit');
+
+                flatpickr(input, {
+                    dateFormat: 'Y-m-d',
+                    allowInput: true,
+                    defaultDate: currentVal || null,
+                    minDate: minDate || null,
+                    disableMobile: false,
+                    onChange: function (selectedDates, dateStr) {
+                        if (autoSubmit && input.form) {
+                            input.form.submit();
+                        }
+                    }
+                });
+            });
+        });
     </script>
     @stack('scripts')
 </body>

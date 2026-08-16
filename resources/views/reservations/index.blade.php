@@ -532,7 +532,13 @@
             document.getElementById('edit_customer_name').value = btn.dataset.name || '';
             document.getElementById('edit_customer_phone').value = btn.dataset.phone || '';
             document.getElementById('edit_customer_email').value = btn.dataset.email || '';
-            document.getElementById('edit_reservation_date').value = btn.dataset.date || '';
+            // Set date via Flatpickr API if initialized, otherwise fall back to plain value
+            const editDateEl = document.getElementById('edit_reservation_date');
+            if (editDateEl._flatpickr) {
+                editDateEl._flatpickr.setDate(btn.dataset.date || '', false);
+            } else {
+                editDateEl.value = btn.dataset.date || '';
+            }
             document.getElementById('edit_reservation_time').value = btn.dataset.time || '';
             document.getElementById('edit_guest_count').value = btn.dataset.guests || '';
             document.getElementById('edit_deposit_amount').value = btn.dataset.deposit || '';

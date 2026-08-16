@@ -25,6 +25,67 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Flatpickr -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <style>
+        /* Dark-theme Flatpickr overrides for admin panel */
+        .flatpickr-calendar {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,.5);
+            color: #cbd5e1;
+        }
+        .flatpickr-day {
+            color: #cbd5e1;
+        }
+        .flatpickr-day:hover {
+            background: #334155;
+            border-color: transparent;
+        }
+        .flatpickr-day.selected,
+        .flatpickr-day.selected:hover {
+            background: #3b82f6;
+            border-color: #3b82f6;
+            color: #fff;
+        }
+        .flatpickr-day.today {
+            border-color: #3b82f6;
+        }
+        .flatpickr-months .flatpickr-month {
+            background: #0f172a;
+            border-radius: 12px 12px 0 0;
+            color: #fff;
+        }
+        .flatpickr-current-month .flatpickr-monthDropdown-months,
+        .flatpickr-current-month input.cur-year {
+            color: #fff;
+        }
+        .flatpickr-weekday {
+            background: #0f172a;
+            color: #60a5fa;
+            font-weight: 600;
+        }
+        .flatpickr-months .flatpickr-prev-month svg,
+        .flatpickr-months .flatpickr-next-month svg {
+            fill: #94a3b8;
+        }
+        .flatpickr-months .flatpickr-prev-month:hover svg,
+        .flatpickr-months .flatpickr-next-month:hover svg {
+            fill: #60a5fa;
+        }
+        .numInputWrapper span.arrowUp:after {
+            border-bottom-color: #94a3b8;
+        }
+        .numInputWrapper span.arrowDown:after {
+            border-top-color: #94a3b8;
+        }
+        .flatpickr-innerContainer,
+        .flatpickr-rContainer {
+            background: #1e293b;
+        }
+    </style>
 </head>
 <body class="bg-[#0b0f19] text-slate-100 font-sans h-full selection:bg-blue-600 selection:text-white overflow-hidden">
     
@@ -221,6 +282,23 @@
                     if (window.innerWidth < 1024) {
                         closeSidebar();
                     }
+                });
+            });
+        });
+    </script>
+    <!-- Flatpickr JS -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('input[type="date"]').forEach(function (input) {
+                var currentVal = input.value || '';
+                var minDate = input.getAttribute('min') || null;
+                flatpickr(input, {
+                    dateFormat: 'Y-m-d',
+                    allowInput: true,
+                    defaultDate: currentVal || null,
+                    minDate: minDate || null,
+                    disableMobile: false,
                 });
             });
         });
