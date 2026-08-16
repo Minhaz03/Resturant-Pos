@@ -75,13 +75,21 @@
             </div>
         </div>
         
-        <div class="mt-6 grid grid-cols-2 gap-3">
-            <a href="{{ route('admin.tenants.edit', $tenant->id) }}" class="text-center bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition-colors font-medium">Edit Tenant</a>
-            <form action="{{ route('admin.tenants.destroy', $tenant->id) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this tenant and all its data? This cannot be undone.')">
+        <div class="mt-6 space-y-3">
+            <form action="{{ route('admin.tenants.impersonate', $tenant->id) }}" method="POST">
                 @csrf
-                @method('DELETE')
-                <button type="submit" class="w-full bg-red-600/20 hover:bg-red-600 text-red-500 hover:text-white py-2 rounded-lg transition-colors font-medium border border-red-600/30">Delete</button>
+                <button type="submit" class="w-full text-center bg-amber-600 hover:bg-amber-500 text-white py-2.5 rounded-lg transition-colors font-medium flex items-center justify-center gap-2 shadow-md">
+                    <i class="bi bi-box-arrow-in-right text-lg"></i> Login as Tenant
+                </button>
             </form>
+            <div class="grid grid-cols-2 gap-3">
+                <a href="{{ route('admin.tenants.edit', $tenant->id) }}" class="text-center bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition-colors font-medium">Edit Tenant</a>
+                <form action="{{ route('admin.tenants.destroy', $tenant->id) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this tenant and all its data? This cannot be undone.')">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="w-full bg-red-600/20 hover:bg-red-600 text-red-500 hover:text-white py-2 rounded-lg transition-colors font-medium border border-red-600/30">Delete</button>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -142,6 +150,7 @@
                         <th class="p-4 font-semibold">Name</th>
                         <th class="p-4 font-semibold">Email</th>
                         <th class="p-4 font-semibold">Role</th>
+                        <th class="p-4 font-semibold text-right">Action</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-700/50 text-sm">
@@ -150,16 +159,24 @@
                         <td class="p-4 font-medium text-white">{{ $user->name }}</td>
                         <td class="p-4 text-gray-300">{{ $user->email }}</td>
                         <td class="p-4">
-                            @if($user->hasRole('owner') || $user->role === 'owner')
+                            @if($user->hasRole('owner') || (isset($user->role) && $user->role === 'owner'))
                                 <span class="px-2 py-1 bg-purple-500/20 text-purple-400 rounded-lg text-xs font-medium border border-purple-500/30">Owner</span>
                             @else
                                 <span class="px-2 py-1 bg-gray-700 text-gray-300 rounded-lg text-xs font-medium border border-gray-600">User</span>
                             @endif
                         </td>
+                        <td class="p-4 text-right">
+                            <form action="{{ route('admin.tenants.impersonate-user', [$tenant->id, $user->id]) }}" method="POST" class="inline-block">
+                                @csrf
+                                <button type="submit" class="px-3 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 ms-auto" title="Login as {{ $user->name }}">
+                                    <i class="bi bi-box-arrow-in-right"></i> Login as User
+                                </button>
+                            </form>
+                        </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="3" class="p-6 text-center text-gray-500">No users found.</td>
+                        <td colspan="4" class="p-6 text-center text-gray-500">No users found.</td>
                     </tr>
                     @endforelse
                 </tbody>

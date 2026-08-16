@@ -525,6 +525,12 @@
                     <i class="bi bi-person-gear"></i><span>Users</span>
                 </a>
             @endcan
+            @can('view roles')
+                <a href="{{ route('roles.index') }}"
+                    class="sidebar-link {{ request()->routeIs('roles.*') ? 'active' : '' }}">
+                    <i class="bi bi-shield-lock"></i><span>Roles & Permissions</span>
+                </a>
+            @endcan
             @can('view settings')
                 <a href="{{ route('settings.index') }}"
                     class="sidebar-link {{ request()->routeIs('settings.*') ? 'active' : '' }}">
@@ -640,6 +646,21 @@
                 }
             }
         @endphp
+
+        @if(session()->has('impersonated_by_admin'))
+        <div class="px-4 py-2.5 text-center text-sm font-semibold d-flex align-items-center justify-content-between shadow-sm position-relative" style="background: linear-gradient(90deg, #d97706, #b45309); color: #ffffff; z-index: 1050;">
+            <div class="d-flex align-items-center gap-2 mx-auto flex-wrap justify-content-center">
+                <i class="bi bi-person-badge-fill fs-5"></i>
+                <span>You are currently impersonating <strong>{{ auth()->user()->name }}</strong> (Tenant: <strong>{{ auth()->user()->tenant->name ?? 'N/A' }}</strong>)</span>
+                <form action="{{ route('impersonate.leave') }}" method="POST" class="d-inline ms-2">
+                    @csrf
+                    <button type="submit" class="btn btn-sm btn-light text-dark font-weight-bold shadow-sm" style="border-radius: 6px; font-weight: 700;">
+                        <i class="bi bi-arrow-left-circle me-1"></i> Back to Super Admin
+                    </button>
+                </form>
+            </div>
+        </div>
+        @endif
 
         @if($isTrialing)
         <div class="bg-grad-warning text-white px-4 py-2 text-center text-sm fw-semibold d-flex align-items-center justify-content-center gap-2 shadow-sm">

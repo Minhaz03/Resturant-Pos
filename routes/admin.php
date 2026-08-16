@@ -17,6 +17,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('logout', [LoginController::class, 'logout'])->name('logout');
 
         Route::resource('tenants', \App\Http\Controllers\Admin\TenantController::class);
+        Route::post('tenants/{tenant}/impersonate', [\App\Http\Controllers\Admin\TenantController::class, 'impersonate'])->name('tenants.impersonate');
+        Route::post('tenants/{tenant}/users/{user}/impersonate', [\App\Http\Controllers\Admin\TenantController::class, 'impersonateUser'])->name('tenants.impersonate-user');
         Route::resource('plans', \App\Http\Controllers\Admin\PlanController::class);
         Route::resource('subscriptions', \App\Http\Controllers\Admin\SubscriptionController::class);
         

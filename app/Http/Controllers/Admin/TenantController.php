@@ -111,4 +111,56 @@ class TenantController extends Controller
         $tenant->delete();
         return redirect()->route('admin.tenants.index')->with('success', 'Tenant deleted successfully.');
     }
+
+    public function impersonate(Request $request, \App\Models\Tenant $tenant)
+    {
+        $user = $tenant->users()->first();
+
+        if (!$user) {
+            return redirect()->back()->with('error', 'No user account found for this tenant store to login as.');
+        }
+
+        return $this->performImpersonation($tenant, $user);
+    }
+
+    public function impersonateUser(Request $request, \App\Models\Tenant $tenant, \App\Models\User $user)
+    {
+        if ($user->tenant_id !== $tenant->id) {
+            return redirect()->back()->with('error', 'Selected user does not belong to this tenant store.');
+        }
+
+        return $this->performImpersonation($tenant, $user);
+    }
+
+    protected function performImpersonation(\App\Models\Tenant $tenant, \App\Models\User $user)
+    {
+        $adminId = auth('admin')->id() ?? session('impersonated_by_admin');
+        if ($adminId) {
+            session()->put('impersonated_by_admin', $adminId);
+        }
+
+        auth('web')->login($user);
+        session()->put('tenant_id', $tenant->id);
+        app()->instance('tenant', $tenant);
+
+        return redirect()->route('dashboard')->with('success', "Logged in as {$user->name} ({$tenant->name}).");
+    }
+
+    public function leaveImpersonation(Request $request)
+    {
+        if (!session()->has('impersonated_by_admin')) {
+            return redirect()->route('admin.dashboard');
+        }
+
+        $adminId = session()->get('impersonated_by_admin');
+        
+        auth('web')->logout();
+        session()->forget(['impersonated_by_admin', 'tenant_id']);
+
+        if ($adminId && $admin = \App\Models\Admin::find($adminId)) {
+            auth('admin')->login($admin);
+        }
+
+        return redirect()->route('admin.tenants.index')->with('success', 'Returned to Super Admin panel.');
+    }
 }

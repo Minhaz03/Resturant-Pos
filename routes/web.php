@@ -43,7 +43,9 @@ Route::post('/billing/payment/ipn', [\App\Http\Controllers\BillingController::cl
 Route::middleware(['tenant', 'auth', 'verified'])->group(function () {
 
     // Dashboard
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::middleware('permission:view dashboard')->group(function () {
+        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    });
 
     // Billing & Subscription
     Route::get('/billing', [\App\Http\Controllers\BillingController::class, 'index'])->name('dashboard.billing');
@@ -55,95 +57,136 @@ Route::middleware(['tenant', 'auth', 'verified'])->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // Categories
-    Route::resource('categories', CategoryController::class);
+    Route::middleware('permission:view categories')->group(function () {
+        Route::resource('categories', CategoryController::class);
+    });
 
     // Menu Items
-    Route::resource('menu', MenuItemController::class);
-    Route::patch('menu/{menuItem}/availability', [MenuItemController::class, 'toggleAvailability'])->name('menu.toggle-availability');
+    Route::middleware('permission:view menu')->group(function () {
+        Route::resource('menu', MenuItemController::class);
+        Route::patch('menu/{menuItem}/availability', [MenuItemController::class, 'toggleAvailability'])->name('menu.toggle-availability');
+    });
 
     // Tables
-    Route::resource('tables', TableController::class);
-    Route::patch('tables/{table}/status', [TableController::class, 'updateStatus'])->name('tables.update-status');
+    Route::middleware('permission:view tables')->group(function () {
+        Route::resource('tables', TableController::class);
+        Route::patch('tables/{table}/status', [TableController::class, 'updateStatus'])->name('tables.update-status');
+    });
 
     // Reservations
-    Route::resource('reservations', ReservationController::class);
+    Route::middleware('permission:view reservations')->group(function () {
+        Route::resource('reservations', ReservationController::class);
+    });
 
     // Orders
-    Route::resource('orders', OrderController::class)->except(['edit', 'update']);
-    Route::get('orders/{order}/print', [OrderController::class, 'print'])->name('orders.print');
-    Route::patch('orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.update-status');
-    Route::post('orders/{order}/settle', [OrderController::class, 'settlePayment'])->name('orders.settle');
+    Route::middleware('permission:view orders')->group(function () {
+        Route::resource('orders', OrderController::class)->except(['edit', 'update']);
+        Route::get('orders/{order}/print', [OrderController::class, 'print'])->name('orders.print');
+        Route::patch('orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.update-status');
+        Route::post('orders/{order}/settle', [OrderController::class, 'settlePayment'])->name('orders.settle');
+    });
 
     // POS
-    Route::get('/pos', [POSController::class, 'index'])->name('pos.index');
-    Route::post('/pos/process', [POSController::class, 'processOrder'])->name('pos.process');
-    Route::get('/pos/search-product', [POSController::class, 'searchProduct'])->name('pos.search-product');
-    Route::post('/pos/validate-coupon', [POSController::class, 'validateCoupon'])->name('pos.validate-coupon');
-    Route::get('/pos/active-reservations', [POSController::class, 'getActiveReservations'])->name('pos.active-reservations');
+    Route::middleware('permission:access pos')->group(function () {
+        Route::get('/pos', [POSController::class, 'index'])->name('pos.index');
+        Route::post('/pos/process', [POSController::class, 'processOrder'])->name('pos.process');
+        Route::get('/pos/search-product', [POSController::class, 'searchProduct'])->name('pos.search-product');
+        Route::post('/pos/validate-coupon', [POSController::class, 'validateCoupon'])->name('pos.validate-coupon');
+        Route::get('/pos/active-reservations', [POSController::class, 'getActiveReservations'])->name('pos.active-reservations');
+    });
 
     // Kitchen (KDS)
-    Route::get('/kitchen', [KitchenController::class, 'index'])->name('kitchen.index');
-    Route::patch('/kitchen/{kitchenOrder}/status', [KitchenController::class, 'updateStatus'])->name('kitchen.update-status');
-    Route::patch('/kitchen/order/{order}/serve', [KitchenController::class, 'serveOrder'])->name('kitchen.serve-order');
-    Route::patch('/kitchen/order/{order}/status', [KitchenController::class, 'updateOrderStatus'])->name('kitchen.update-order-status');
-    Route::get('/kitchen/new-orders', [KitchenController::class, 'getNewOrders'])->name('kitchen.new-orders');
+    Route::middleware('permission:view kitchen')->group(function () {
+        Route::get('/kitchen', [KitchenController::class, 'index'])->name('kitchen.index');
+        Route::patch('/kitchen/{kitchenOrder}/status', [KitchenController::class, 'updateStatus'])->name('kitchen.update-status');
+        Route::patch('/kitchen/order/{order}/serve', [KitchenController::class, 'serveOrder'])->name('kitchen.serve-order');
+        Route::patch('/kitchen/order/{order}/status', [KitchenController::class, 'updateOrderStatus'])->name('kitchen.update-order-status');
+        Route::get('/kitchen/new-orders', [KitchenController::class, 'getNewOrders'])->name('kitchen.new-orders');
+    });
 
     // Customers
-    Route::resource('customers', CustomerController::class);
-    Route::get('/customers/search', [CustomerController::class, 'search'])->name('customers.search');
+    Route::middleware('permission:view customers')->group(function () {
+        Route::resource('customers', CustomerController::class);
+        Route::get('/customers/search', [CustomerController::class, 'search'])->name('customers.search');
+    });
 
     // Employees & Attendance
-    Route::resource('employees', EmployeeController::class);
-    Route::get('/attendance', [EmployeeController::class, 'attendance'])->name('employees.attendance');
-    Route::post('/attendance', [EmployeeController::class, 'markAttendance'])->name('employees.mark-attendance');
-    Route::get('/employees/{employee}/attendance', [EmployeeController::class, 'employeeAttendance'])->name('employees.employee-attendance');
-    Route::post('/employees/{employee}/mark-attendance', [EmployeeController::class, 'markEmployeeAttendance'])->name('employees.mark-attendance-individual');
+    Route::middleware('permission:view employees')->group(function () {
+        Route::resource('employees', EmployeeController::class);
+        Route::get('/attendance', [EmployeeController::class, 'attendance'])->name('employees.attendance');
+        Route::post('/attendance', [EmployeeController::class, 'markAttendance'])->name('employees.mark-attendance');
+        Route::get('/employees/{employee}/attendance', [EmployeeController::class, 'employeeAttendance'])->name('employees.employee-attendance');
+        Route::post('/employees/{employee}/mark-attendance', [EmployeeController::class, 'markEmployeeAttendance'])->name('employees.mark-attendance-individual');
+    });
 
     // Inventory
-    Route::resource('inventory', InventoryController::class);
-    Route::post('/inventory/{inventoryItem}/adjust', [InventoryController::class, 'adjust'])->name('inventory.adjust');
+    Route::middleware('permission:view inventory')->group(function () {
+        Route::resource('inventory', InventoryController::class);
+        Route::post('/inventory/{inventoryItem}/adjust', [InventoryController::class, 'adjust'])->name('inventory.adjust');
+    });
 
     // Suppliers
-    Route::resource('suppliers', SupplierController::class);
+    Route::middleware('permission:view suppliers')->group(function () {
+        Route::resource('suppliers', SupplierController::class);
+    });
 
     // Purchase Orders
-    Route::resource('purchases', PurchaseOrderController::class)->except(['edit', 'update', 'destroy']);
-    Route::post('/purchases/{purchaseOrder}/receive', [PurchaseOrderController::class, 'receive'])->name('purchases.receive');
+    Route::middleware('permission:view purchases')->group(function () {
+        Route::resource('purchases', PurchaseOrderController::class)->except(['edit', 'update', 'destroy']);
+        Route::post('/purchases/{purchaseOrder}/receive', [PurchaseOrderController::class, 'receive'])->name('purchases.receive');
+    });
 
     // Delivery
-    Route::get('/delivery', [DeliveryController::class, 'index'])->name('delivery.index');
-    Route::post('/delivery/{delivery}/assign', [DeliveryController::class, 'assign'])->name('delivery.assign');
-    Route::patch('/delivery/{delivery}/status', [DeliveryController::class, 'updateStatus'])->name('delivery.update-status');
-    Route::get('/delivery/riders', [DeliveryController::class, 'riders'])->name('delivery.riders');
-    Route::post('/delivery/riders', [DeliveryController::class, 'storeRider'])->name('delivery.riders.store');
-    Route::put('/delivery/riders/{user}', [DeliveryController::class, 'updateRider'])->name('delivery.riders.update');
-    Route::delete('/delivery/riders/{user}', [DeliveryController::class, 'destroyRider'])->name('delivery.riders.destroy');
+    Route::middleware('permission:view delivery')->group(function () {
+        Route::get('/delivery', [DeliveryController::class, 'index'])->name('delivery.index');
+        Route::post('/delivery/{delivery}/assign', [DeliveryController::class, 'assign'])->name('delivery.assign');
+        Route::patch('/delivery/{delivery}/status', [DeliveryController::class, 'updateStatus'])->name('delivery.update-status');
+        Route::get('/delivery/riders', [DeliveryController::class, 'riders'])->name('delivery.riders');
+        Route::post('/delivery/riders', [DeliveryController::class, 'storeRider'])->name('delivery.riders.store');
+        Route::put('/delivery/riders/{user}', [DeliveryController::class, 'updateRider'])->name('delivery.riders.update');
+        Route::delete('/delivery/riders/{user}', [DeliveryController::class, 'destroyRider'])->name('delivery.riders.destroy');
+    });
 
     // Coupons
-    Route::resource('coupons', CouponController::class);
+    Route::middleware('permission:view coupons')->group(function () {
+        Route::resource('coupons', CouponController::class);
+    });
 
     // Reports
-    Route::get('/reports/sales', [ReportController::class, 'salesIndex'])->name('reports.sales');
-    Route::get('/reports/sales/data', [ReportController::class, 'salesData'])->name('reports.sales.data');
-    Route::get('/reports/sales/pdf', [ReportController::class, 'exportSalesPdf'])->name('reports.sales.pdf');
-    Route::get('/reports/sales/csv', [ReportController::class, 'exportSalesCsv'])->name('reports.sales.csv');
-    Route::get('/reports/sales/excel', [ReportController::class, 'exportSalesExcel'])->name('reports.sales.excel');
-    Route::get('/reports/inventory', [ReportController::class, 'inventoryReport'])->name('reports.inventory');
-    Route::get('/reports/inventory/csv', [ReportController::class, 'exportInventoryCsv'])->name('reports.inventory.csv');
-    Route::get('/reports/customers', [ReportController::class, 'customerReport'])->name('reports.customers');
-    Route::get('/reports/tax', [ReportController::class, 'taxReport'])->name('reports.tax');
+    Route::middleware('permission:view reports')->group(function () {
+        Route::get('/reports/sales', [ReportController::class, 'salesIndex'])->name('reports.sales');
+        Route::get('/reports/sales/data', [ReportController::class, 'salesData'])->name('reports.sales.data');
+        Route::get('/reports/sales/pdf', [ReportController::class, 'exportSalesPdf'])->name('reports.sales.pdf');
+        Route::get('/reports/sales/csv', [ReportController::class, 'exportSalesCsv'])->name('reports.sales.csv');
+        Route::get('/reports/sales/excel', [ReportController::class, 'exportSalesExcel'])->name('reports.sales.excel');
+        Route::get('/reports/inventory', [ReportController::class, 'inventoryReport'])->name('reports.inventory');
+        Route::get('/reports/inventory/csv', [ReportController::class, 'exportInventoryCsv'])->name('reports.inventory.csv');
+        Route::get('/reports/customers', [ReportController::class, 'customerReport'])->name('reports.customers');
+        Route::get('/reports/tax', [ReportController::class, 'taxReport'])->name('reports.tax');
+    });
 
     // Settings
-    Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
-    Route::put('/settings', [SettingController::class, 'update'])->name('settings.update');
-    Route::put('/settings/hours', [SettingController::class, 'updateBusinessHours'])->name('settings.hours');
+    Route::middleware('permission:view settings')->group(function () {
+        Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
+        Route::put('/settings', [SettingController::class, 'update'])->name('settings.update');
+        Route::put('/settings/hours', [SettingController::class, 'updateBusinessHours'])->name('settings.hours');
+    });
 
     // Users (Admin)
-    Route::resource('users', UserController::class)->except(['show']);
+    Route::middleware('permission:view users')->group(function () {
+        Route::resource('users', UserController::class)->except(['show']);
+    });
+
+    // Roles & Permissions Management
+    Route::middleware('permission:view roles')->group(function () {
+        Route::resource('roles', \App\Http\Controllers\RoleController::class);
+    });
 
     // Expenses
-    Route::resource('expense-categories', \App\Http\Controllers\ExpenseCategoryController::class);
-    Route::resource('expenses', \App\Http\Controllers\ExpenseController::class);
+    Route::middleware('permission:view expenses')->group(function () {
+        Route::resource('expense-categories', \App\Http\Controllers\ExpenseCategoryController::class);
+        Route::resource('expenses', \App\Http\Controllers\ExpenseController::class);
+    });
 
     // Notifications
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
@@ -155,5 +198,7 @@ Route::middleware(['tenant', 'auth', 'verified'])->group(function () {
     Route::put('/tickets/{ticket}/status', [\App\Http\Controllers\TicketController::class, 'updateStatus'])->name('tickets.status');
 
 });
+
+Route::post('/impersonate/leave', [\App\Http\Controllers\Admin\TenantController::class, 'leaveImpersonation'])->name('impersonate.leave');
 
 require __DIR__ . '/auth.php';

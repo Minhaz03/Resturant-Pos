@@ -70,6 +70,12 @@ class RolesAndPermissionsSeeder extends Seeder
             // Reports
             'view reports', 'export reports',
 
+            // Expenses Management
+            'view expenses', 'create expenses', 'edit expenses', 'delete expenses',
+
+            // Roles & Permissions Management
+            'view roles', 'create roles', 'edit roles', 'delete roles',
+
             // User Management
             'view users', 'create users', 'edit users', 'delete users',
 

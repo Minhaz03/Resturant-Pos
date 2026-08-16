@@ -24,6 +24,13 @@
         </div>
     @endif
 
+    @if(session('error'))
+        <div class="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-semibold flex items-center gap-3 shadow-lg">
+            <i class="bi bi-exclamation-triangle-fill text-rose-400 text-base"></i>
+            <span>{{ session('error') }}</span>
+        </div>
+    @endif
+
     <div class="bg-slate-900/80 backdrop-blur-xl rounded-2xl shadow-xl border border-slate-800 overflow-hidden">
         
         <div class="p-5 border-b border-slate-800 flex justify-between items-center bg-slate-900/60">
@@ -97,6 +104,12 @@
                                 <a href="{{ route('admin.tenants.edit', $tenant->id) }}" class="w-8 h-8 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 flex items-center justify-center transition-colors" title="Edit Tenant">
                                     <i class="bi bi-pencil-square"></i>
                                 </a>
+                                <form action="{{ route('admin.tenants.impersonate', $tenant->id) }}" method="POST" class="inline-block">
+                                    @csrf
+                                    <button type="submit" class="w-8 h-8 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/20 flex items-center justify-center transition-colors" title="Login as Tenant">
+                                        <i class="bi bi-box-arrow-in-right"></i>
+                                    </button>
+                                </form>
                                 <form action="{{ route('admin.tenants.destroy', $tenant->id) }}" method="POST" class="inline-block delete-form">
                                     @csrf
                                     @method('DELETE')
