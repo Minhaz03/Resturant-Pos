@@ -4,9 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class RestaurantSetting extends Model
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+
+class RestaurantSetting extends Model implements HasMedia
 {
     use \App\Traits\BelongsToTenant;
+    use InteractsWithMedia;
+
     protected $fillable = [
         'name', 'slug', 'logo', 'tagline', 'address', 'phone', 'email', 'website',
         'currency', 'currency_symbol', 'tax_rate', 'tax_name', 'timezone',
@@ -29,6 +34,10 @@ class RestaurantSetting extends Model
 
     public function getLogoUrlAttribute()
     {
+        $mediaUrl = $this->getFirstMediaUrl('logos');
+        if ($mediaUrl) {
+            return $mediaUrl;
+        }
         return $this->logo ? asset('storage/' . $this->logo) : asset('images/logo.png');
     }
 }

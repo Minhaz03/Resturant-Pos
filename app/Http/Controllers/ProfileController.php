@@ -31,19 +31,11 @@ class ProfileController extends Controller
         
         // Handle file uploads
         if ($request->hasFile('avatar')) {
-            // Delete old avatar if exists
-            if ($user->avatar && \Illuminate\Support\Facades\Storage::disk('public')->exists($user->avatar)) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($user->avatar);
-            }
-            $validated['avatar'] = $request->file('avatar')->store('avatars', 'public');
+            $user->addMediaFromRequest('avatar')->toMediaCollection('avatars');
         }
 
         if ($request->hasFile('nid_photo')) {
-            // Delete old nid_photo if exists
-            if ($user->nid_photo && \Illuminate\Support\Facades\Storage::disk('public')->exists($user->nid_photo)) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($user->nid_photo);
-            }
-            $validated['nid_photo'] = $request->file('nid_photo')->store('nid_photos', 'public');
+            $user->addMediaFromRequest('nid_photo')->toMediaCollection('nid_photos');
         }
 
         $user->fill($validated);

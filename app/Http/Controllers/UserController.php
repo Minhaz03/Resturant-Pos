@@ -43,8 +43,7 @@ class UserController extends Controller
             'status' => $data['status'],
         ]);
         if ($request->hasFile('avatar')) {
-            $path = $request->file('avatar')->store('avatars', 'public');
-            $user->update(['avatar' => $path]);
+            $user->addMediaFromRequest('avatar')->toMediaCollection('avatars');
         }
         $user->assignRole($data['role']);
         return redirect()->route('users.index')->with('success', 'User created.');
@@ -71,11 +70,13 @@ class UserController extends Controller
         $updateData = ['name' => $data['name'], 'email' => $data['email'], 'phone' => $data['phone'], 'status' => $data['status']];
         if (!empty($data['password'])) $updateData['password'] = Hash::make($data['password']);
         if ($request->hasFile('avatar')) {
-            if ($user->avatar) \Illuminate\Support\Facades\Storage::disk('public')->delete($user->avatar);
-            $updateData['avatar'] = $request->file('avatar')->store('avatars', 'public');
+            $user->addMediaFromRequest('avatar')->toMediaCollection('avatars');
         } elseif ($request->input('remove_avatar') == '1') {
-            if ($user->avatar) \Illuminate\Support\Facades\Storage::disk('public')->delete($user->avatar);
-            $updateData['avatar'] = null;
+            $user->clearMediaCollection('avatars');
+            if ($user->avatar) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($user->avatar);
+                $updateData['avatar'] = null;
+            }
         }
         $user->update($updateData);
         $user->syncRoles([$data['role']]);

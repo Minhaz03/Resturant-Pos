@@ -29,16 +29,14 @@ class TicketController extends Controller
             'attachment' => 'nullable|file|max:5120',
         ]);
 
-        $attachmentPath = null;
-        if ($request->hasFile('attachment')) {
-            $attachmentPath = $request->file('attachment')->store('tickets', 'public');
-        }
-
-        $ticket->replies()->create([
+        $reply = $ticket->replies()->create([
             'admin_id' => auth('admin')->id(),
             'message' => $request->message,
-            'attachment_path' => $attachmentPath,
         ]);
+
+        if ($request->hasFile('attachment')) {
+            $reply->addMediaFromRequest('attachment')->toMediaCollection('attachments');
+        }
 
         if ($ticket->status == 'closed' || $ticket->status == 'resolved') {
             $ticket->update(['status' => 'open']);

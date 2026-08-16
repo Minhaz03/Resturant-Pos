@@ -82,15 +82,15 @@ class DeliveryController extends Controller
             'status' => $data['status'],
         ];
 
-        if ($request->hasFile('avatar')) {
-            $userData['avatar'] = $request->file('avatar')->store('avatars', 'public');
-        }
-        if ($request->hasFile('nid_photo')) {
-            $userData['nid_photo'] = $request->file('nid_photo')->store('nid_photos', 'public');
-        }
-
         $user = User::create($userData);
         $user->assignRole($data['role']);
+
+        if ($request->hasFile('avatar')) {
+            $user->addMediaFromRequest('avatar')->toMediaCollection('avatars');
+        }
+        if ($request->hasFile('nid_photo')) {
+            $user->addMediaFromRequest('nid_photo')->toMediaCollection('nid_photos');
+        }
 
         return back()->with('success', 'Rider added successfully.');
     }
@@ -110,16 +110,10 @@ class DeliveryController extends Controller
         $updateData = ['name' => $data['name'], 'email' => $data['email'], 'phone' => $data['phone'], 'status' => $data['status']];
         
         if ($request->hasFile('avatar')) {
-            if ($user->avatar) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($user->avatar);
-            }
-            $updateData['avatar'] = $request->file('avatar')->store('avatars', 'public');
+            $user->addMediaFromRequest('avatar')->toMediaCollection('avatars');
         }
         if ($request->hasFile('nid_photo')) {
-            if ($user->nid_photo) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($user->nid_photo);
-            }
-            $updateData['nid_photo'] = $request->file('nid_photo')->store('nid_photos', 'public');
+            $user->addMediaFromRequest('nid_photo')->toMediaCollection('nid_photos');
         }
         
         $user->update($updateData);

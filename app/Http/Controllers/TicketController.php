@@ -36,16 +36,14 @@ class TicketController extends Controller
             'status' => 'open',
         ]);
 
-        $attachmentPath = null;
-        if ($request->hasFile('attachment')) {
-            $attachmentPath = $request->file('attachment')->store('tickets', 'public');
-        }
-
-        $ticket->replies()->create([
+        $reply = $ticket->replies()->create([
             'user_id' => auth()->id(),
             'message' => $request->message,
-            'attachment_path' => $attachmentPath,
         ]);
+
+        if ($request->hasFile('attachment')) {
+            $reply->addMediaFromRequest('attachment')->toMediaCollection('attachments');
+        }
 
         // Notify all admins
         $admins = \App\Models\Admin::all();
@@ -72,16 +70,14 @@ class TicketController extends Controller
             'attachment' => 'nullable|file|max:5120',
         ]);
 
-        $attachmentPath = null;
-        if ($request->hasFile('attachment')) {
-            $attachmentPath = $request->file('attachment')->store('tickets', 'public');
-        }
-
-        $ticket->replies()->create([
+        $reply = $ticket->replies()->create([
             'user_id' => auth()->id(),
             'message' => $request->message,
-            'attachment_path' => $attachmentPath,
         ]);
+
+        if ($request->hasFile('attachment')) {
+            $reply->addMediaFromRequest('attachment')->toMediaCollection('attachments');
+        }
 
         if ($ticket->status == 'resolved' || $ticket->status == 'closed') {
             $ticket->update(['status' => 'open']);

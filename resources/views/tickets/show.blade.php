@@ -98,9 +98,9 @@
                                         <span class="small text-muted">{{ $reply->created_at->format('M d, Y h:i A') }}</span>
                                     </div>
                                     <div class="text-secondary whitespace-pre-wrap" style="line-height: 1.6;">{!! nl2br(e($reply->message)) !!}</div>
-                                    @if($reply->attachment_path)
-                                        <div class="mt-3 pt-3 border-top">
-                                            <a href="{{ Storage::url($reply->attachment_path) }}" target="_blank" class="text-secondary text-decoration-none small fw-semibold d-inline-flex align-items-center gap-1">
+                                    @if($reply->attachment_url)
+                                        <div class="mt-2">
+                                            <a href="{{ $reply->attachment_url }}" target="_blank" class="text-primary text-decoration-none small fw-semibold d-inline-flex align-items-center gap-1">
                                                 <i class="bi bi-paperclip fs-6"></i> View Attachment
                                             </a>
                                         </div>

@@ -4,8 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class TicketReply extends Model
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Illuminate\Support\Facades\Storage;
+
+class TicketReply extends Model implements HasMedia
 {
+    use InteractsWithMedia;
+
     protected $fillable = [
         'ticket_id',
         'user_id',
@@ -27,5 +33,14 @@ class TicketReply extends Model
     public function admin()
     {
         return $this->belongsTo(Admin::class);
+    }
+
+    public function getAttachmentUrlAttribute()
+    {
+        $mediaUrl = $this->getFirstMediaUrl('attachments');
+        if ($mediaUrl) {
+            return $mediaUrl;
+        }
+        return $this->attachment_path ? Storage::url($this->attachment_path) : null;
     }
 }

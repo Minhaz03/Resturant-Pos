@@ -4,11 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
-class Employee extends Model
+class Employee extends Model implements HasMedia
 {
     use \App\Traits\BelongsToTenant;
-    use SoftDeletes;
+    use SoftDeletes, InteractsWithMedia;
 
     protected $fillable = [
         'user_id', 'employee_id', 'name', 'phone', 'email', 'address',
@@ -46,7 +48,16 @@ class Employee extends Model
 
     public function getAvatarUrlAttribute()
     {
+        $mediaUrl = $this->getFirstMediaUrl('avatars');
+        if ($mediaUrl) return $mediaUrl;
         return $this->avatar ? asset('storage/' . $this->avatar) : asset('images/default-avatar.png');
+    }
+
+    public function getNidPhotoUrlAttribute()
+    {
+        $mediaUrl = $this->getFirstMediaUrl('nid_photos');
+        if ($mediaUrl) return $mediaUrl;
+        return $this->nid_photo ? asset('storage/' . $this->nid_photo) : null;
     }
 
     public function getTodayAttendanceAttribute()

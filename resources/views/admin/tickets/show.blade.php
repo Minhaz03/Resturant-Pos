@@ -59,9 +59,9 @@
                         <span class="text-xs text-slate-400">{{ $reply->created_at->format('M d, Y h:i A') }}</span>
                     </div>
                     <div class="text-slate-300 text-sm whitespace-pre-wrap">{!! nl2br(e($reply->message)) !!}</div>
-                    @if($reply->attachment_path)
+                    @if($reply->attachment_url)
                         <div class="mt-3 pt-3 border-t border-slate-700">
-                            <a href="{{ Storage::url($reply->attachment_path) }}" target="_blank" class="text-blue-400 text-xs font-semibold flex items-center gap-1">
+                            <a href="{{ $reply->attachment_url }}" target="_blank" class="text-blue-400 text-xs font-semibold flex items-center gap-1">
                                 <i class="bi bi-paperclip"></i> View Attachment
                             </a>
                         </div>

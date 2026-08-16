@@ -43,12 +43,15 @@ class SettingController extends Controller
         $setting = RestaurantSetting::first();
         $data['loyalty_enabled'] = $request->boolean('loyalty_enabled');
 
+        // Remove logo from fillable data — handled separately via MediaLibrary
+        unset($data['logo']);
+
+        $setting = RestaurantSetting::updateOrCreate(['slug' => 'main'], $data);
+
         if ($request->hasFile('logo')) {
-            if ($setting?->logo) Storage::disk('public')->delete($setting->logo);
-            $data['logo'] = $request->file('logo')->store('settings', 'public');
+            $setting->addMediaFromRequest('logo')->toMediaCollection('logos');
         }
 
-        RestaurantSetting::updateOrCreate(['slug' => 'main'], $data);
         return back()->with('success', 'Settings updated successfully.');
     }
 

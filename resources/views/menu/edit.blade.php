@@ -74,6 +74,101 @@
             border-color: var(--primary, #8B0000);
             box-shadow: 0 0 0 3px rgba(139, 0, 0, 0.12);
         }
+
+        /* Image Preview Styles */
+        #imagePreviewWrapper {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+            border: 2px dashed #cbd5e1;
+            min-height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+
+        #imagePreviewWrapper:hover {
+            border-color: var(--primary, #8B0000);
+            background: linear-gradient(135deg, #fff1f2, #fff);
+        }
+
+        #imagePreviewWrapper.has-image {
+            border: none;
+            background: transparent;
+        }
+
+        #imagePreviewImg {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 10px;
+            display: none;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+        }
+
+        #imagePreviewWrapper.has-image #imagePreviewImg {
+            display: block;
+        }
+
+        #imagePreviewWrapper.has-image .preview-placeholder {
+            display: none;
+        }
+
+        .preview-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            color: #94a3b8;
+            pointer-events: none;
+        }
+
+        .remove-preview-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(139,0,0,0.85);
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 13px;
+            z-index: 10;
+            transition: background 0.2s;
+        }
+
+        .remove-preview-btn:hover {
+            background: #8B0000;
+        }
+
+        #imagePreviewWrapper.has-image .remove-preview-btn {
+            display: flex;
+        }
+
+        .image-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.35);
+            border-radius: 10px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        #imagePreviewWrapper.has-image:hover .image-overlay {
+            display: flex;
+        }
     </style>
 @endpush
 
@@ -268,7 +363,40 @@
                         </span>
                     </div>
                     <div class="card-body pt-0">
-                        <input type="file" id="menuItemImage" name="image" accept="image/*">
+                        {{-- Live Preview Box --}}
+                        @php $existingImgUrl = $menuItem->image_url; $hasImg = $menuItem->hasMedia('image') || $menuItem->image; @endphp
+
+                        <div id="imagePreviewWrapper"
+                             onclick="document.getElementById('imageFileInput').click()"
+                             title="Click to change image"
+                             class="{{ $hasImg ? 'has-image' : '' }}">
+
+                            <img id="imagePreviewImg"
+                                 src="{{ $hasImg ? $existingImgUrl : '#' }}"
+                                 alt="Item Image Preview">
+
+                            <div class="image-overlay">
+                                <span class="text-white fw-semibold" style="font-size:0.85rem;">
+                                    <i class="bi bi-pencil-fill me-1"></i>Change Image
+                                </span>
+                            </div>
+
+                            <button type="button" class="remove-preview-btn" id="removePreviewBtn"
+                                    title="Remove image"
+                                    onclick="event.stopPropagation(); clearImagePreview();">
+                                <i class="bi bi-x"></i>
+                            </button>
+
+                            <div class="preview-placeholder">
+                                <i class="bi bi-cloud-arrow-up" style="font-size:2.4rem; color:#94a3b8;"></i>
+                                <div style="font-weight:600;color:#475569;font-size:0.875rem;">Click or drag & drop image here</div>
+                                <div style="color:#94a3b8;font-size:0.78rem;">JPG, PNG, WebP &middot; Max 4MB</div>
+                            </div>
+                        </div>
+
+                        {{-- Hidden file input --}}
+                        <input type="file" id="imageFileInput" name="image" accept="image/*" style="display:none;">
+
                         <div class="text-muted mt-2 d-flex align-items-center gap-1" style="font-size:0.75rem">
                             <i class="bi bi-info-circle"></i> Max file size: 4MB. Uploading a new image will replace the current image.
                         </div>
@@ -441,71 +569,56 @@
             ingredientIndex++;
         });
 
-        // Initialize FilePond Dropzone with custom styling & initial image
-        FilePond.registerPlugin(
-            FilePondPluginImagePreview,
-            FilePondPluginFileValidateSize,
-            FilePondPluginFileValidateType
-        );
+        // ── Custom Image Preview Logic ──
+        const imageFileInput = document.getElementById('imageFileInput');
+        const imagePreviewWrapper = document.getElementById('imagePreviewWrapper');
+        const imagePreviewImg = document.getElementById('imagePreviewImg');
+        const removeImageFlag = document.getElementById('removeImageFlag');
 
-        @php
-            $existingImageUrl = $menuItem->image_url;
-            $hasImage = $menuItem->hasMedia('image') || $menuItem->image;
-        @endphp
+        // Handle drag & drop on the wrapper
+        imagePreviewWrapper.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            if (!this.classList.contains('has-image')) {
+                this.style.borderColor = 'var(--primary, #8B0000)';
+            }
+        });
+        imagePreviewWrapper.addEventListener('dragleave', function() {
+            if (!this.classList.contains('has-image')) {
+                this.style.borderColor = '';
+            }
+        });
+        imagePreviewWrapper.addEventListener('drop', function(e) {
+            e.preventDefault();
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                const dt = new DataTransfer();
+                dt.items.add(file);
+                imageFileInput.files = dt.files;
+                showPreview(file);
+            }
+        });
 
-        const pondConfig = {
-            allowMultiple: false,
-            maxFileSize: '4MB',
-            acceptedFileTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'],
-            labelIdle: `
-                <div class="py-3 text-center">
-                    <div class="mb-2">
-                        <i class="bi bi-cloud-arrow-up-fill text-primary" style="font-size: 2.2rem;"></i>
-                    </div>
-                    <div style="font-weight:600;color:#334155;font-size:0.9rem">Drag & Drop Dish Image</div>
-                    <div style="color:#64748b;font-size:0.8rem" class="mt-1">or <span class="filepond--label-action">Browse from device</span></div>
-                </div>
-            `,
-            imagePreviewHeight: 180,
-            server: null,
-            instantUpload: false,
-            storeAsFile: true,
-            onremovefile: function() {
-                document.getElementById('removeImageFlag').value = '1';
-            },
-            onaddfile: function() {
-                document.getElementById('removeImageFlag').value = '0';
-            },
-        };
+        imageFileInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                showPreview(this.files[0]);
+                removeImageFlag.value = '0';
+            }
+        });
 
-        @if ($hasImage)
-            pondConfig.files = [{
-                source: '{{ $existingImageUrl }}',
-                options: {
-                    type: 'local',
-                    file: {
-                        name: 'current-image.jpg',
-                        size: 0,
-                        type: 'image/jpeg',
-                    },
-                    metadata: {
-                        poster: '{{ $existingImageUrl }}'
-                    },
-                },
-            }];
-            pondConfig.server = {
-                load: (source, load, error, progress, abort, headers) => {
-                    fetch(source)
-                        .then(res => res.blob())
-                        .then(blob => load(blob))
-                        .catch(e => error(e));
-                    return {
-                        abort: () => abort()
-                    };
-                },
+        function showPreview(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                imagePreviewImg.src = e.target.result;
+                imagePreviewWrapper.classList.add('has-image');
             };
-        @endif
+            reader.readAsDataURL(file);
+        }
 
-        FilePond.create(document.querySelector('#menuItemImage'), pondConfig);
+        function clearImagePreview() {
+            imagePreviewImg.src = '#';
+            imagePreviewWrapper.classList.remove('has-image');
+            imageFileInput.value = '';
+            removeImageFlag.value = '1';
+        }
     </script>
 @endpush

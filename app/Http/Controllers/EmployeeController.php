@@ -43,18 +43,20 @@ class EmployeeController extends Controller
             'nid_photo'         => 'nullable|image|max:4096',
             'emergency_contact' => 'nullable|string',
         ]);
-
         $data['employee_id'] = 'EMP-' . date('y') . str_pad(Employee::count() + 1, 4, '0', STR_PAD_LEFT);
         $data['status'] = 'active';
 
+        // Remove file fields from fillable data before create
+        unset($data['avatar'], $data['nid_photo']);
+
+        $employee = Employee::create($data);
+
         if ($request->hasFile('avatar')) {
-            $data['avatar'] = $request->file('avatar')->store('employees', 'public');
+            $employee->addMediaFromRequest('avatar')->toMediaCollection('avatars');
         }
         if ($request->hasFile('nid_photo')) {
-            $data['nid_photo'] = $request->file('nid_photo')->store('employees/nid', 'public');
+            $employee->addMediaFromRequest('nid_photo')->toMediaCollection('nid_photos');
         }
-
-        Employee::create($data);
         return redirect()->route('employees.index')->with('success', 'Employee created successfully.');
     }
 
@@ -90,16 +92,16 @@ class EmployeeController extends Controller
         ]);
 
         if ($request->hasFile('avatar')) {
-            if ($employee->avatar) Storage::disk('public')->delete($employee->avatar);
-            $data['avatar'] = $request->file('avatar')->store('employees', 'public');
+            $employee->addMediaFromRequest('avatar')->toMediaCollection('avatars');
         } elseif ($request->input('remove_avatar') == '1') {
+            $employee->clearMediaCollection('avatars');
             if ($employee->avatar) Storage::disk('public')->delete($employee->avatar);
             $data['avatar'] = null;
         }
         if ($request->hasFile('nid_photo')) {
-            if ($employee->nid_photo) Storage::disk('public')->delete($employee->nid_photo);
-            $data['nid_photo'] = $request->file('nid_photo')->store('employees/nid', 'public');
+            $employee->addMediaFromRequest('nid_photo')->toMediaCollection('nid_photos');
         } elseif ($request->input('remove_nid_photo') == '1') {
+            $employee->clearMediaCollection('nid_photos');
             if ($employee->nid_photo) Storage::disk('public')->delete($employee->nid_photo);
             $data['nid_photo'] = null;
         }

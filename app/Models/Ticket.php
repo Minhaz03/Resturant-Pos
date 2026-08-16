@@ -4,8 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Ticket extends Model
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+
+class Ticket extends Model implements HasMedia
 {
+    use InteractsWithMedia;
+
     protected $fillable = [
         'tenant_id',
         'user_id',

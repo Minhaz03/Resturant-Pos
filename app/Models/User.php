@@ -8,11 +8,13 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 use Spatie\Activitylog\Traits\CausesActivity;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
-class User extends Authenticatable
+class User extends Authenticatable implements HasMedia
 {
     use \App\Traits\BelongsToTenant;
-    use HasFactory, Notifiable, HasRoles, CausesActivity;
+    use HasFactory, Notifiable, HasRoles, CausesActivity, InteractsWithMedia;
 
     protected $fillable = [
         'name', 'email', 'password', 'phone', 'address', 'nid', 'avatar', 'nid_photo', 'status', 'last_login_at',
@@ -51,7 +53,20 @@ class User extends Authenticatable
 
     public function getAvatarUrlAttribute()
     {
+        $mediaUrl = $this->getFirstMediaUrl('avatars');
+        if ($mediaUrl) {
+            return $mediaUrl;
+        }
         return $this->avatar ? asset('storage/' . $this->avatar) : asset('images/default-avatar.png');
+    }
+
+    public function getNidPhotoUrlAttribute()
+    {
+        $mediaUrl = $this->getFirstMediaUrl('nid_photos');
+        if ($mediaUrl) {
+            return $mediaUrl;
+        }
+        return $this->nid_photo ? asset('storage/' . $this->nid_photo) : null;
     }
 
     public function isActive()
