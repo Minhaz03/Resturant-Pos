@@ -344,22 +344,168 @@
             font-size: 0.87rem;
         }
 
+        /* ======================================================
+           Premium Form Input Styles — Red/Gold Theme
+        ====================================================== */
+
         .form-control,
         .form-select {
-            border-radius: 8px;
-            border-color: #e2e8f0;
+            border-radius: 10px;
+            border: 1.5px solid #e2e8f0;
             font-size: 0.875rem;
+            font-family: 'Inter', sans-serif;
+            color: #1e293b;
+            background: #fff;
+            padding: 0.52rem 0.85rem;
+            transition: border-color 0.22s ease, box-shadow 0.22s ease, background 0.22s ease;
+            line-height: 1.5;
+        }
+
+        .form-control::placeholder {
+            color: #a0aec0;
+            font-size: 0.85rem;
+        }
+
+        .form-control:hover,
+        .form-select:hover {
+            border-color: #c5a028;
         }
 
         .form-control:focus,
         .form-select:focus {
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(139, 0, 0, 0.1);
+            background: #fff;
+            box-shadow:
+                0 0 0 3.5px rgba(139, 0, 0, 0.10),
+                0 1px 4px rgba(139, 0, 0, 0.08);
+            outline: none;
+            color: #111827;
         }
 
+        .form-control:focus::placeholder {
+            color: #c4b5b5;
+        }
+
+        /* Textarea */
+        textarea.form-control {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        /* Form Label */
         .form-label {
-            font-weight: 500;
-            font-size: 0.84rem;
+            font-weight: 600;
+            font-size: 0.82rem;
+            color: #374151;
+            margin-bottom: 0.3rem;
+            letter-spacing: 0.01em;
+        }
+
+        /* Input Group */
+        .input-group .input-group-text {
+            background: #f8fafc;
+            border: 1.5px solid #e2e8f0;
+            border-right: none;
+            border-radius: 10px 0 0 10px;
+            color: #8b0000;
+            font-size: 0.95rem;
+            padding: 0.52rem 0.75rem;
+            transition: border-color 0.22s ease, background 0.22s ease;
+        }
+
+        .input-group > .form-control:not(:first-child),
+        .input-group > .form-select:not(:first-child) {
+            border-left: none;
+            border-radius: 0 10px 10px 0;
+        }
+
+        .input-group:focus-within .input-group-text {
+            border-color: var(--primary);
+            background: rgba(139, 0, 0, 0.04);
+            color: var(--primary);
+        }
+
+        .input-group:focus-within .form-control,
+        .input-group:focus-within .form-select {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3.5px rgba(139, 0, 0, 0.10);
+        }
+
+        /* Form Check (checkbox / radio) */
+        .form-check-input {
+            width: 1.05rem;
+            height: 1.05rem;
+            border: 1.5px solid #cbd5e0;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+        }
+
+        .form-check-input:checked {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .form-check-input:focus {
+            box-shadow: 0 0 0 3px rgba(139, 0, 0, 0.15);
+            border-color: var(--primary);
+        }
+
+        .form-check-label {
+            font-size: 0.875rem;
+            color: #374151;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        /* Form Text (helper text) */
+        .form-text {
+            font-size: 0.78rem;
+            color: #94a3b8;
+            margin-top: 0.25rem;
+        }
+
+        /* Validation States */
+        .form-control.is-invalid,
+        .form-select.is-invalid {
+            border-color: #dc2626;
+            background-image: none;
+            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.10);
+        }
+
+        .form-control.is-valid,
+        .form-select.is-valid {
+            border-color: #16a34a;
+            background-image: none;
+            box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.10);
+        }
+
+        .invalid-feedback {
+            font-size: 0.78rem;
+            color: #dc2626;
+            margin-top: 0.3rem;
+            display: block;
+        }
+
+        .valid-feedback {
+            font-size: 0.78rem;
+            color: #16a34a;
+            margin-top: 0.3rem;
+        }
+
+        /* Select2 Theme Override */
+        .select2-container--bootstrap-5 .select2-selection {
+            border-radius: 10px !important;
+            border: 1.5px solid #e2e8f0 !important;
+            font-size: 0.875rem !important;
+            min-height: 38px !important;
+            transition: border-color 0.22s ease, box-shadow 0.22s ease !important;
+        }
+
+        .select2-container--bootstrap-5.select2-container--focus .select2-selection,
+        .select2-container--bootstrap-5.select2-container--open .select2-selection {
+            border-color: var(--primary) !important;
+            box-shadow: 0 0 0 3.5px rgba(139, 0, 0, 0.10) !important;
         }
 
         .badge {
@@ -422,6 +568,15 @@
             to {
                 transform: rotate(360deg);
             }
+        }
+
+        /* === Form Submit Button Gap ===
+           Ensure a consistent visual separation between form fields
+           and the action buttons (Submit / Cancel) row.
+        */
+        form .d-flex:has([type="submit"]),
+        .card-body .d-flex:has([type="submit"]) {
+            margin-top: 1.5rem;
         }
     </style>
     @stack('styles')
